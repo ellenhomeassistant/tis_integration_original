@@ -277,13 +277,16 @@ class CoordinatedAnalogSensor(BaseSensorEntity, SensorEntity):
             """Handle the lux update event."""
             try:
                 if event.data["feedback_type"] == "analog_feedback":
-                    self._state = map_analog_value(int(event.data["analog"][self.channel_number - 1]))
+                    #Map the analog to be within min and max
+                    value = int(event.data["analog"][self.channel_number - 1])
+                    normalized = (value - self.min) / (self.max - self.min) # Normalize to 0–1
+                    normalized = max(0, min(1, normalized)) # Clamp between 0 and 1
+                    self._state = int(normalized * 100) # Scale to 0–100
+                    
                 self.async_write_ha_state()
             except Exception as e:
                 logging.error(f"event data error for analog sensor: {event.data}")
 
-        def map_analog_value(self, value: int) -> int:
-            """Map the analog to be within min and max"""
              
             normalized = (value - self.min) / (self.max - self.min) # Normalize to 0–1
             normalized = max(0, min(1, normalized)) # Clamp between 0 and 1
