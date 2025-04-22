@@ -3,6 +3,7 @@
 import logging
 from math import ceil
 from typing import Any
+import json
 
 from TISControlProtocol.api import TISApi
 from TISControlProtocol.BytesHelper import int_to_8_bit_binary
@@ -45,6 +46,7 @@ async def async_setup_entry(
                 next(iter(cover["channels"][0].values())),
                 cover["device_id"],
                 cover["gateway"],
+                cover["settings"],
             )
             for cover in covers_w_pos
             for cover_name, cover in cover.items()
@@ -57,8 +59,9 @@ async def async_setup_entry(
                 channel_number=channel_number,
                 device_id=device_id,
                 gateway=gateway,
+                settings=json.loads(settings),
             )
-            for cover_name, channel_number, device_id, gateway in cover_entities
+            for cover_name, channel_number, device_id, gateway, settings in cover_entities
         ]
         async_add_devices(tis_covers, update_before_add=True)
 
@@ -100,8 +103,10 @@ class TISCoverWPos(CoverEntity):
         cover_name: str,
         channel_number: int,
         device_id: list[int],
+        settings: dict,
     ) -> None:
         """Initialize the cover."""
+        self.exchange_command = settings["exchange_command"]
         self.api = tis_api
         self.gateway = gateway
         self.device_id = device_id
@@ -129,8 +134,12 @@ class TISCoverWPos(CoverEntity):
                     channel_value = event.data["additional_bytes"][2]
                     channel_number = event.data["channel_number"]
                     if int(channel_number) == self.channel_number:
-                        self._attr_is_closed = channel_value == 0
-                        self._attr_current_cover_position = channel_value
+                        # Convert the received position if needed
+                        position = channel_value
+                        if self.exchange_command == '1':
+                            position = 100 - position
+                        self._attr_is_closed = position == 0
+                        self._attr_current_cover_position = position
                     self.async_write_ha_state()
                 elif event.data["feedback_type"] == "binary_feedback":
                     n_bytes = ceil(event.data["additional_bytes"][0] / 8)
@@ -143,13 +152,12 @@ class TISCoverWPos(CoverEntity):
                     self.async_write_ha_state()
                 elif event.data["feedback_type"] == "update_response":
                     additional_bytes = event.data["additional_bytes"]
-                    self._attr_current_cover_position = additional_bytes[
-                        self.channel_number
-                    ]
+                    position = additional_bytes[self.channel_number]
+                    if self.exchange_command == '1':
+                        position = 100 - position
+                    self._attr_current_cover_position = position
                     self._attr_is_closed = self._attr_current_cover_position == 0
-                    self._attr_state = (
-                        STATE_CLOSING if self._attr_is_closed else STATE_OPENING
-                    )
+                    self._attr_state = STATE_CLOSING if self._attr_is_closed else STATE_OPENING
                 elif event.data["feedback_type"] == "offline_device":
                     self._attr_state = STATE_UNKNOWN
                     self._attr_is_closed = None
@@ -159,6 +167,12 @@ class TISCoverWPos(CoverEntity):
 
         self.listener = self.hass.bus.async_listen(str(self.device_id), handle_event)
         _ = await self.api.protocol.sender.send_packet(self.update_packet)
+
+    def _convert_position(self, position: int) -> int:
+        """Convert position based on exchange_command flag."""
+        if self.exchange_command == '1':
+            return 100 - position
+        return position
 
     @property
     def name(self) -> str:
@@ -187,7 +201,9 @@ class TISCoverWPos(CoverEntity):
 
     async def async_open_cover(self, **kwargs: Any) -> None:
         """Open the cover."""
-        packet = self.generate_cover_packet(self, 100)
+        # For open, we want position 100, but if exchanged, we send 0
+        send_position = self._convert_position(100)
+        packet = self.generate_cover_packet(self, send_position)
         ack_status = await self.api.protocol.sender.send_packet_with_ack(packet)
         if ack_status:
             self._attr_is_closed = False
@@ -195,12 +211,13 @@ class TISCoverWPos(CoverEntity):
         else:
             self._attr_is_closed = None
             self._attr_current_cover_position = None
-
         self.async_write_ha_state()
 
     async def async_close_cover(self, **kwargs: Any) -> None:
         """Close cover."""
-        packet = self.generate_cover_packet(self, 0)
+        # For close, we want position 0, but if exchanged, we send 100
+        send_position = self._convert_position(0)
+        packet = self.generate_cover_packet(self, send_position)
         ack_status = await self.api.protocol.sender.send_packet_with_ack(packet)
         if ack_status:
             self._attr_is_closed = True
@@ -208,17 +225,22 @@ class TISCoverWPos(CoverEntity):
         else:
             self._attr_is_closed = False
             self._attr_current_cover_position = None
+        self.async_write_ha_state()
 
     async def async_set_cover_position(self, **kwargs: Any) -> None:
         """Move the cover to a specific position."""
-        packet = self.generate_cover_packet(self, kwargs[ATTR_POSITION])
+        position = kwargs[ATTR_POSITION]
+        # Convert the position before sending to the device
+        send_position = self._convert_position(position)
+        packet = self.generate_cover_packet(self, send_position)
         ack_status = await self.api.protocol.sender.send_packet_with_ack(packet)
         if ack_status:
-            self._attr_is_closed = kwargs[ATTR_POSITION] == 0
-            self._attr_current_cover_position = kwargs[ATTR_POSITION]
+            self._attr_is_closed = position == 0
+            self._attr_current_cover_position = position
         else:
             self._attr_is_closed = None
             self._attr_current_cover_position = None
+        self.async_write_ha_state()
 
 
 class TISCoverNoPos(CoverEntity):
