@@ -206,8 +206,9 @@ class TISCoverWPos(CoverEntity):
         packet = self.generate_cover_packet(self, send_position)
         ack_status = await self.api.protocol.sender.send_packet_with_ack(packet)
         if ack_status:
-            self._attr_is_closed = False
-            self._attr_current_cover_position = 100
+            # attr_is_closed = False if exchange_command = '0' != '1', motor would be (opened and not closed) -open method-
+            self._attr_is_closed = self.exchange_command == '1'
+            self._attr_current_cover_position = send_position
         else:
             self._attr_is_closed = None
             self._attr_current_cover_position = None
@@ -220,10 +221,11 @@ class TISCoverWPos(CoverEntity):
         packet = self.generate_cover_packet(self, send_position)
         ack_status = await self.api.protocol.sender.send_packet_with_ack(packet)
         if ack_status:
-            self._attr_is_closed = True
-            self._attr_current_cover_position = 0
+            # attr_is_closed = True if exchange_command = '0' != '1', motor would be (closed and not opened) -close method-
+            self._attr_is_closed = self.exchange_command != '1'
+            self._attr_current_cover_position = send_position
         else:
-            self._attr_is_closed = False
+            self._attr_is_closed = False # Need to figure out why!
             self._attr_current_cover_position = None
         self.async_write_ha_state()
 
@@ -235,8 +237,8 @@ class TISCoverWPos(CoverEntity):
         packet = self.generate_cover_packet(self, send_position)
         ack_status = await self.api.protocol.sender.send_packet_with_ack(packet)
         if ack_status:
-            self._attr_is_closed = position == 0
-            self._attr_current_cover_position = position
+            self._attr_is_closed = position == 100 if self.exchange_command == '1' else position == 0
+            self._attr_current_cover_position = send_position
         else:
             self._attr_is_closed = None
             self._attr_current_cover_position = None
