@@ -59,7 +59,7 @@ async def async_setup_entry(
                 channel_number=channel_number,
                 device_id=device_id,
                 gateway=gateway,
-                settings=json.loads(settings),
+                settings=settings,
             )
             for cover_name, channel_number, device_id, gateway, settings in cover_entities
         ]
@@ -103,10 +103,14 @@ class TISCoverWPos(CoverEntity):
         cover_name: str,
         channel_number: int,
         device_id: list[int],
-        settings: dict,
+        settings
     ) -> None:
         """Initialize the cover."""
-        self.exchange_command = settings["exchange_command"]
+        if settings:
+            settings = json.loads(settings)
+            self.exchange_command = settings["exchange_command"]
+        else:
+            self.exchange_command = '0'
         self.api = tis_api
         self.gateway = gateway
         self.device_id = device_id
