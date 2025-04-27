@@ -160,7 +160,7 @@ class TISCoverWPos(CoverEntity):
                     if self.exchange_command == '1':
                         position = 100 - position
                     self._attr_current_cover_position = position
-                    self._attr_is_closed = self._attr_current_cover_position == 0 if  self.exchange_command == '0' else self._attr_current_cover_position == 100
+                    self._attr_is_closed = self._convert_position(self._attr_current_cover_position) == 0
                     self._attr_state = STATE_CLOSING if self._attr_is_closed else STATE_OPENING
                 elif event.data["feedback_type"] == "offline_device":
                     self._attr_state = STATE_UNKNOWN
