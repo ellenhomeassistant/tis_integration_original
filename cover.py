@@ -145,15 +145,15 @@ class TISCoverWPos(CoverEntity):
                         self._attr_is_closed = position == 0
                         self._attr_current_cover_position = position
                     self.async_write_ha_state()
-                elif event.data["feedback_type"] == "binary_feedback":
-                    n_bytes = ceil(event.data["additional_bytes"][0] / 8)
-                    channels_status = "".join(
-                        int_to_8_bit_binary(event.data["additional_bytes"][i])
-                        for i in range(1, n_bytes + 1)
-                    )
-                    if channels_status[self.channel_number - 1] == "0":
-                        self._attr_is_closed = True
-                    self.async_write_ha_state()
+                # elif event.data["feedback_type"] == "binary_feedback":
+                #     n_bytes = ceil(event.data["additional_bytes"][0] / 8)
+                #     channels_status = "".join(
+                #         int_to_8_bit_binary(event.data["additional_bytes"][i])
+                #         for i in range(1, n_bytes + 1)
+                #     )
+                #     if channels_status[self.channel_number - 1] == "0":
+                #         self._attr_is_closed = True
+                #     self.async_write_ha_state()
                 elif event.data["feedback_type"] == "update_response":
                     additional_bytes = event.data["additional_bytes"]
                     position = additional_bytes[self.channel_number]
