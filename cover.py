@@ -241,8 +241,8 @@ class TISCoverWPos(CoverEntity):
         packet = self.generate_cover_packet(self, send_position)
         ack_status = await self.api.protocol.sender.send_packet_with_ack(packet)
         if ack_status:
-            self._attr_is_closed = position == 100 if self.exchange_command == '1' else position == 0
-            self._attr_current_cover_position = send_position
+            self._attr_is_closed = position == 0
+            self._attr_current_cover_position = position
         else:
             self._attr_is_closed = None
             self._attr_current_cover_position = None
