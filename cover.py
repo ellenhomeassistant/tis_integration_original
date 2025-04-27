@@ -211,7 +211,7 @@ class TISCoverWPos(CoverEntity):
         ack_status = await self.api.protocol.sender.send_packet_with_ack(packet)
         if ack_status:
             # attr_is_closed = False if exchange_command = '0' != '1', motor would be (opened and not closed) -open method-
-            self._attr_is_closed = self.exchange_command == '1'
+            self._attr_is_closed = False
             self._attr_current_cover_position = send_position
         else:
             self._attr_is_closed = None
@@ -226,10 +226,10 @@ class TISCoverWPos(CoverEntity):
         ack_status = await self.api.protocol.sender.send_packet_with_ack(packet)
         if ack_status:
             # attr_is_closed = True if exchange_command = '0' != '1', motor would be (closed and not opened) -close method-
-            self._attr_is_closed = self.exchange_command != '1'
+            self._attr_is_closed = True
             self._attr_current_cover_position = send_position
         else:
-            self._attr_is_closed = False # Need to figure out why!
+            self._attr_is_closed = None # Need to figure out why!
             self._attr_current_cover_position = None
         self.async_write_ha_state()
 
