@@ -122,7 +122,6 @@ class TISClimate(ClimateEntity):
         self.listener = None
         self._attr_state = STATE_OFF
         self._attr_target_temperature = None
-        self._attr_current_temperature = None
         self._attr_max_temp = None
         self._attr_min_temp = None
         self._attr_target_temperature_step = None
@@ -132,8 +131,7 @@ class TISClimate(ClimateEntity):
         """Set up the AC."""
         self._attr_state = STATE_UNKNOWN
         self._attr_target_temperature = None
-        self._attr_hvac_mode = HVACMode.OFF
-        self._attr_current_temperature = None        
+        self._attr_hvac_mode = HVACMode.OFF      
         self._attr_fan_mode = FAN_MEDIUM
 
         self._attr_max_temp = TEMPERATURE_RANGES[self._attr_hvac_mode]["max"][
@@ -200,7 +198,7 @@ class TISClimate(ClimateEntity):
                                 # Update cool mode temperature
                                 self._attr_hvac_mode = HVACMode.COOL
                                 self._attr_target_temperature = operation_value
-                                self._attr_current_temperature = operation_value
+
                                 logging.info(
                                     f"Cool mode temperature updated to {operation_value}"
                                 )
@@ -228,7 +226,7 @@ class TISClimate(ClimateEntity):
                                 # Update heating mode temperature
                                 self._attr_hvac_mode = HVACMode.HEAT
                                 self._attr_target_temperature = operation_value
-                                self._attr_current_temperature = operation_value
+
                                 logging.info(
                                     f"Heating mode temperature updated to {operation_value}"
                                 )
@@ -237,7 +235,7 @@ class TISClimate(ClimateEntity):
                                 # Update Auto mode temperature
                                 self._attr_hvac_mode = HVACMode.AUTO
                                 self._attr_target_temperature = operation_value
-                                self._attr_current_temperature = operation_value
+
                                 logging.info(
                                     f"Auto mode temperature updated to {operation_value}"
                                 )
@@ -313,10 +311,10 @@ class TISClimate(ClimateEntity):
         """Return the unit of measurement."""
         return self._attr_temperature_unit
 
-    @property
-    def current_temperature(self) -> float:
-        """Return the current temperature."""
-        return self._attr_target_temperature
+    # @property
+    # def current_temperature(self) -> float:
+    #     """Return the current temperature."""
+    #     return self._attr_target_temperature
 
     @property
     def target_temperature(self) -> float:
@@ -376,7 +374,7 @@ class TISClimate(ClimateEntity):
             self._attr_state = new_state
             self._attr_min_temp = new_min_temp
             self._attr_max_temp = new_max_temp
-            self._attr_current_temperature = self._attr_target_temperature = (
+            self._attr_target_temperature = (
                 new_target_temperature
             )
         else:
@@ -414,7 +412,7 @@ class TISClimate(ClimateEntity):
         )
         ack_status = await self.api.protocol.sender.send_packet_with_ack(packet)
         if ack_status:
-            self._attr_current_temperature = self._attr_target_temperature = (
+            self._attr_target_temperature = (
                 new_target_temperature
             )
             # update temperature holders
@@ -428,7 +426,7 @@ class TISClimate(ClimateEntity):
             logging.error("Failed to set temperature")
             self._attr_target_temperature = None
             self._attr_hvac_mode = None
-            self._attr_current_temperature = None
+
         self.async_write_ha_state()
 
 
@@ -578,10 +576,10 @@ class TISFloorHeating(ClimateEntity):
         """Return the unit of measurement."""
         return self._attr_temperature_unit
 
-    @property
-    def current_temperature(self) -> float:
-        """Return the current temperature."""
-        return self._attr_target_temperature
+    # @property
+    # def current_temperature(self) -> float:
+    #     """Return the current temperature."""
+    #     return self._attr_target_temperature
 
     @property
     def target_temperature(self) -> float:
