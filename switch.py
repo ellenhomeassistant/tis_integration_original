@@ -78,6 +78,7 @@ class TISSwitch(SwitchEntity):
         self.gateway = gateway
         self.channel_number = int(channel_number)
         self.listener: Callable | None = None
+        self.broadcast_channel = 255
         self.on_packet: TISPacket = protocol_handler.generate_control_on_packet(self)
         self.off_packet: TISPacket = protocol_handler.generate_control_off_packet(self)
         self.update_packet: TISPacket = protocol_handler.generate_control_update_packet(
@@ -99,21 +100,22 @@ class TISSwitch(SwitchEntity):
                         self._state = (
                             STATE_ON if int(channel_value) == 100 else STATE_OFF
                         )
-                elif event.data["feedback_type"] == "binary_feedback":
-                    n_bytes = ceil(event.data["additional_bytes"][0] / 8)
-                    channels_status = "".join(
-                        int_to_8_bit_binary(event.data["additional_bytes"][i])
-                        for i in range(1, n_bytes + 1)
-                    )
-                    self._state = (
-                        STATE_ON
-                        if channels_status[self.channel_number - 1] == "1"
-                        else STATE_OFF
-                    )
-                elif event.data["feedback_type"] == "update_response":
-                    additional_bytes = event.data["additional_bytes"]
-                    channel_status = int(additional_bytes[self.channel_number])
-                    self._state = STATE_ON if channel_status > 0 else STATE_OFF
+                elif self.channel_number != self.broadcast_channel:
+                    if event.data["feedback_type"] == "binary_feedback":
+                        n_bytes = ceil(event.data["additional_bytes"][0] / 8)
+                        channels_status = "".join(
+                            int_to_8_bit_binary(event.data["additional_bytes"][i])
+                            for i in range(1, n_bytes + 1)
+                        )
+                        self._state = (
+                            STATE_ON
+                            if channels_status[self.channel_number - 1] == "1"
+                            else STATE_OFF
+                        )
+                    elif event.data["feedback_type"] == "update_response":
+                        additional_bytes = event.data["additional_bytes"]
+                        channel_status = int(additional_bytes[self.channel_number])
+                        self._state = STATE_ON if channel_status > 0 else STATE_OFF
                 elif event.data["feedback_type"] == "offline_device":
                     if int(event.data["channel_number"]) == self.channel_number:
                         self._state = STATE_UNKNOWN
