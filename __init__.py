@@ -65,6 +65,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: TISConfigEntry) -> bool:
         hass.http.register_view(TISEndPoint(tis_api))
         hass.http.register_view(ScanDevicesEndPoint(tis_api))
         hass.http.register_view(GetKeyEndpoint(tis_api))
+        hass.http.register_view(ChangeSecurityPassEndpoint(tis_api))
         hass.async_add_executor_job(tis_api.run_display)
     except ConnectionError as e:
         logging.error("error connecting to TIS api %s", e)
