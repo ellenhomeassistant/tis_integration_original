@@ -5,8 +5,13 @@ from TISControlProtocol.api import TISApi
 import asyncio
 import logging
 
+
 async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
     tis_api: TISApi = entry.runtime_data.api
+    logging.warning(f"tis_api dock: {tis_api.__dict__}")
+    logging.warning(f"hass dock: {hass.__dict__}")
+    logging.warning(f"entry dock: {entry.__dict__}")
+    logging.warning(f"config entry: {tis_api.config_entries}")
     lock_module = tis_api.config_entries.get("lock_module", None)
     if lock_module is None:
         logging.error("No lock module found in the configuration")
