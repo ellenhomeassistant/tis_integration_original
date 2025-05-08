@@ -8,10 +8,7 @@ import logging
 
 async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
     tis_api: TISApi = entry.runtime_data.api
-    # lock_module = tis_api.config_entries.get("lock_module", None)
     lock_module = await tis_api.get_entities(platform="lock_module")
-    logging.warning(f"config entry: {tis_api.config_entries}")
-    logging.warning(f"lock module: {lock_module}")
 
     if lock_module is None:
         logging.error("No lock module found in the configuration")
