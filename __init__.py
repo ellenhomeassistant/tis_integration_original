@@ -1,4 +1,5 @@
 """The TISControl integration."""
+
 from __future__ import annotations
 
 import logging
@@ -63,6 +64,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: TISConfigEntry) -> bool:
     except Exception as e:
         logging.error(f"Could Not Update TIS Integration: {e}")
 
+    logging.warning(f"init port: {int(entry.data['port'])}")
     tis_api = TISApi(
         port=int(entry.data["port"]),
         hass=hass,

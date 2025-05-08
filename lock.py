@@ -7,6 +7,7 @@ import logging
 
 
 async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
+    logging.warning(f"lock port: {int(entry.data['port'])}")
     tis_api: TISApi = entry.runtime_data.api
     logging.warning(f"tis_api dock: {tis_api.__dict__}")
     logging.warning(f"hass dock: {hass.__dict__}")
