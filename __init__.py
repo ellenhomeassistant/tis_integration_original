@@ -140,13 +140,10 @@ class CMSEndpoint(HomeAssistantView):
             "free": mem.free,
         }
 
-        return web.Response(
-            text=json.dumps(
-                {
-                    "cpu": cpu,
-                    "disk": disk,
-                    "memory": memory,
-                }
-            ),
-            content_type="application/json",
+        return web.json_response(
+            {
+                "cpu": cpu,
+                "disk": disk,
+                "memory": memory,
+            }
         )
