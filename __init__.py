@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import os
 import uuid
+import psutil
 from attr import dataclass
 from TISControlProtocol.api import *
 from TISControlProtocol.Protocols.udp.ProtocolHandler import TISProtocolHandler
@@ -105,4 +106,6 @@ class CMSEndpoint(HomeAssistantView):
         self.api = api
 
     async def get(self, request):
+        cpu_temp = psutil.sensors_temperatures()['cpu_thermal'][0].current
+
         pass
