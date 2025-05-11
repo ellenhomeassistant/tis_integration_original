@@ -17,12 +17,6 @@ from homeassistant.core import HomeAssistant
 
 from .const import DEVICES_DICT, DOMAIN
 
-from TISControlProtocol.Protocols import setup_udp_protocol
-from TISControlProtocol.Protocols.udp.ProtocolHandler import (
-    TISProtocolHandler,
-    TISPacket,
-)
-
 
 @dataclass
 class TISData:
