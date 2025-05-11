@@ -103,47 +103,53 @@ class CMSEndpoint(HomeAssistantView):
         self.api = api
 
     async def get(self, request):
-        # Mac Address Stuff
-        mac = uuid.getnode()
-        mac_address = ":".join(("%012X" % mac)[i : i + 2] for i in range(0, 12, 2))
+        try:
+            # Mac Address Stuff
+            mac = uuid.getnode()
+            mac_address = ":".join(("%012X" % mac)[i : i + 2] for i in range(0, 12, 2))
 
-        # CPU Stuff
-        cpu_usage = psutil.cpu_percent(interval=1)
-        cpu_temp = psutil.sensors_temperatures().get("cpu_thermal", None)
-        if cpu_temp is not None:
-            cpu_temp = cpu_temp[0].current
-        else:
-            cpu_temp = 0
+            # CPU Stuff
+            cpu_usage = psutil.cpu_percent(interval=1)
+            cpu_temp = psutil.sensors_temperatures().get("cpu_thermal", None)
+            if cpu_temp is not None:
+                cpu_temp = cpu_temp[0].current
+            else:
+                cpu_temp = 0
 
-        cpu = {
-            "cpu_usage": cpu_usage,
-            "cpu_temp": cpu_temp,
-        }
-
-        # Disk Stuff
-        total, used, free, percent = psutil.disk_usage("/")
-        disk = {
-            "total": total,
-            "used": used,
-            "free": free,
-            "percent": percent,
-        }
-
-        # Memory Stuff
-        mem = psutil.virtual_memory()
-        memory = {
-            "total": mem.total,
-            "available": mem.available,
-            "used": mem.used,
-            "percent": mem.percent,
-            "free": mem.free,
-        }
-
-        return web.json_response(
-            {
-                "mac_address": mac_address,
-                "cpu": cpu,
-                "disk": disk,
-                "memory": memory,
+            cpu = {
+                "cpu_usage": cpu_usage,
+                "cpu_temp": cpu_temp,
             }
-        )
+
+            # Disk Stuff
+            total, used, free, percent = psutil.disk_usage("/")
+            disk = {
+                "total": total,
+                "used": used,
+                "free": free,
+                "percent": percent,
+            }
+
+            # Memory Stuff
+            mem = psutil.virtual_memory()
+            memory = {
+                "total": mem.total,
+                "available": mem.available,
+                "used": mem.used,
+                "percent": mem.percent,
+                "free": mem.free,
+            }
+
+            return web.json_response(
+                {
+                    "mac_address": mac_address,
+                    "cpu": cpu,
+                    "disk": disk,
+                    "memory": memory,
+                }
+            )
+        except Exception as e:
+            logging.error(f"Error in CMSEndpoint: {e}")
+            return web.json_response(
+                {"error": "Error in CMSEndpoint", "message": str(e)}, status=500
+            )
