@@ -15,7 +15,8 @@
     "st7789==0.0.4",
     "gpiozero==1.6.2",
     "python-dotenv==1.0.1",
-    "cryptography==44.0.1"
+    "cryptography==44.0.1",
+    "psutil==7.0.0"
   ],
   "ssdp": [],
   "zeroconf": [],
