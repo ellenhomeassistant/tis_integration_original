@@ -111,7 +111,7 @@ class CMSEndpoint(HomeAssistantView):
 
             # CPU Stuff
             cpu_usage = await self.api.hass.async_add_executor_job(
-                psutil.cpu_percent, interval=1
+                psutil.cpu_percent, 1
             )
             logging.warning(f"CPU Usage: {cpu_usage}")
 
