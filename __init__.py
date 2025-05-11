@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import logging
 import os
-import uuid
+import json
+from aiohttp import web
 import psutil
+
 from attr import dataclass
 from TISControlProtocol.api import *
 from TISControlProtocol.Protocols.udp.ProtocolHandler import TISProtocolHandler
@@ -138,4 +140,13 @@ class CMSEndpoint(HomeAssistantView):
             "free": mem.free,
         }
 
-        pass
+        return web.Response(
+            text=json.dumps(
+                {
+                    "cpu": cpu,
+                    "disk": disk,
+                    "memory": memory,
+                }
+            ),
+            content_type="application/json",
+        )
