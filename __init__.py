@@ -6,6 +6,7 @@ import logging
 import os
 from aiohttp import web
 import psutil
+import uuid
 
 from attr import dataclass
 from TISControlProtocol.api import *
@@ -102,6 +103,10 @@ class CMSEndpoint(HomeAssistantView):
         self.api = api
 
     async def get(self, request):
+        # Mac Address Stuff
+        mac = uuid.getnode()
+        mac_address = ":".join(("%012X" % mac)[i : i + 2] for i in range(0, 12, 2))
+
         # CPU Stuff
         cpu_usage = psutil.cpu_percent(interval=1)
         cpu_temp = psutil.sensors_temperatures().get("cpu_thermal", None)
@@ -136,6 +141,7 @@ class CMSEndpoint(HomeAssistantView):
 
         return web.json_response(
             {
+                "mac_address": mac_address,
                 "cpu": cpu,
                 "disk": disk,
                 "memory": memory,
