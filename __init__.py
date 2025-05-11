@@ -106,6 +106,10 @@ class CMSEndpoint(HomeAssistantView):
         self.api = api
 
     async def get(self, request):
-        cpu_temp = psutil.sensors_temperatures()['cpu_thermal'][0].current
+        cpu_temp = psutil.sensors_temperatures().get('cpu_thermal', None)
+        if cpu_temp is not None:
+            cpu_temp = cpu_temp[0].current
+        else:
+            cpu_temp = 0
 
         pass
