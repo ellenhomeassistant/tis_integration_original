@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
+import uuid
 from attr import dataclass
 from TISControlProtocol.api import *
 from TISControlProtocol.Protocols.udp.ProtocolHandler import TISProtocolHandler
@@ -90,3 +91,18 @@ async def async_unload_entry(hass: HomeAssistant, entry: TISConfigEntry) -> bool
         return unload_ok
 
     return False
+
+
+class CMSEndpoint(HomeAssistantView):
+    """Send data to CMS for monitoring."""
+
+    url = "/api/cms"
+    name = "api:cms"
+    requires_auth = False
+
+    def __init__(self, api: TISApi) -> None:
+        """Initialize the endpoint."""
+        self.api = api
+
+    async def get(self, request):
+        pass
