@@ -106,11 +106,18 @@ class CMSEndpoint(HomeAssistantView):
         self.api = api
 
     async def get(self, request):
+        # CPU Stuff
+        cpu_usage = psutil.cpu_percent(interval=1)
         cpu_temp = psutil.sensors_temperatures().get("cpu_thermal", None)
         if cpu_temp is not None:
             cpu_temp = cpu_temp[0].current
         else:
             cpu_temp = 0
+
+        cpu = {
+            "cpu_usage": cpu_usage,
+            "cpu_temp": cpu_temp,
+        }
 
         # Disk Stuff
         total, used, free, percent = psutil.disk_usage("/")
