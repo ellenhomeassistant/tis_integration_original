@@ -128,4 +128,14 @@ class CMSEndpoint(HomeAssistantView):
             "percent": percent,
         }
 
+        # Memory Stuff
+        mem = psutil.virtual_memory()
+        memory = {
+            "total": mem.total,
+            "available": mem.available,
+            "used": mem.used,
+            "percent": mem.percent,
+            "free": mem.free,
+        }
+
         pass
