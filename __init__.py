@@ -110,9 +110,15 @@ class CMSEndpoint(HomeAssistantView):
             logging.warning(f"MAC Address: {mac_address}")
 
             # CPU Stuff
-            cpu_usage = psutil.cpu_percent(interval=1)
+            cpu_usage = await self.api.hass.async_add_executor_job(
+                psutil.cpu_percent, interval=1
+            )
             logging.warning(f"CPU Usage: {cpu_usage}")
-            cpu_temp = psutil.sensors_temperatures().get("cpu_thermal", None)
+
+            cpu_temp = await self.api.hass.async_add_executor_job(
+                psutil.sensors_temperatures
+            )
+            cpu_temp = cpu_temp.get("cpu_thermal", None)
             if cpu_temp is not None:
                 cpu_temp = cpu_temp[0].current
             else:
@@ -126,7 +132,9 @@ class CMSEndpoint(HomeAssistantView):
             logging.warning(f"CPU: {cpu}")
 
             # Disk Stuff
-            total, used, free, percent = psutil.disk_usage("/")
+            total, used, free, percent = await self.api.hass.async_add_executor_job(
+                psutil.disk_usage, "/"
+            )
             disk = {
                 "total": total,
                 "used": used,
@@ -136,7 +144,7 @@ class CMSEndpoint(HomeAssistantView):
             logging.warning(f"Disk: {disk}")
 
             # Memory Stuff
-            mem = psutil.virtual_memory()
+            mem = await self.api.hass.async_add_executor_job(psutil.virtual_memory)
             memory = {
                 "total": mem.total,
                 "available": mem.available,
