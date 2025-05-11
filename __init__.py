@@ -80,6 +80,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: TISConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {"supported_platforms": PLATFORMS})
     try:
         await tis_api.connect()
+        hass.http.register_view(CMSEndpoint(tis_api))
     except ConnectionError as e:
         logging.error("error connecting to TIS api %s", e)
         return False
