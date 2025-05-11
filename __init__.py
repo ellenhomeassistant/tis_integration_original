@@ -107,19 +107,23 @@ class CMSEndpoint(HomeAssistantView):
             # Mac Address Stuff
             mac = uuid.getnode()
             mac_address = ":".join(("%012X" % mac)[i : i + 2] for i in range(0, 12, 2))
+            logging.warning(f"MAC Address: {mac_address}")
 
             # CPU Stuff
             cpu_usage = psutil.cpu_percent(interval=1)
+            logging.warning(f"CPU Usage: {cpu_usage}")
             cpu_temp = psutil.sensors_temperatures().get("cpu_thermal", None)
             if cpu_temp is not None:
                 cpu_temp = cpu_temp[0].current
             else:
                 cpu_temp = 0
+            logging.warning(f"CPU Temp: {cpu_temp}")
 
             cpu = {
                 "cpu_usage": cpu_usage,
                 "cpu_temp": cpu_temp,
             }
+            logging.warning(f"CPU: {cpu}")
 
             # Disk Stuff
             total, used, free, percent = psutil.disk_usage("/")
@@ -129,6 +133,7 @@ class CMSEndpoint(HomeAssistantView):
                 "free": free,
                 "percent": percent,
             }
+            logging.warning(f"Disk: {disk}")
 
             # Memory Stuff
             mem = psutil.virtual_memory()
@@ -139,6 +144,7 @@ class CMSEndpoint(HomeAssistantView):
                 "percent": mem.percent,
                 "free": mem.free,
             }
+            logging, Warning(f"Memory: {memory}")
 
             return web.json_response(
                 {
