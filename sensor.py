@@ -408,19 +408,27 @@ class CoordinatedEnergySensor(BaseSensorEntity, SensorEntity):
                     if event.data["channel_num"] == self.channel_number:
                         value = int(event.data["energy"])
                         self._state = value
-
+                        logging.warning(
+                            f"Energy sensor {self.name} (device_id: {self.device_id}, channel: {self.channel_number}) updated state to {value}"
+                        )
+                    else:
+                        logging.warning(
+                            f"Energy feedback received for channel {event.data['channel_num']} but this sensor is channel {self.channel_number}"
+                        )
                 self.async_write_ha_state()
             except Exception as e:
                 logging.error(
                     f"event data error for energy sensor: {event.data} \n error: {e}"
                 )
-
-            return value
+                logging.warning(
+                    f"Exception occurred in handle_energy_feedback for sensor {self.name}: {e}"
+                )
 
         self.hass.bus.async_listen(str(self.device_id), handle_energy_feedback)
 
     def _update_state(self, data):
         """Update the state based on the data."""
+        logging.warning(f"_update_state called for {self.name} with data: {data}")
 
 
 RELEVANT_TYPES: dict[str, type[CoordinatedLUXSensor]] = {
