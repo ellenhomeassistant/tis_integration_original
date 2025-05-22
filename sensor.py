@@ -401,7 +401,7 @@ class CoordinatedEnergySensor(BaseSensorEntity, SensorEntity):
             """Handle the energy update event."""
             try:
                 if event.data["feedback_type"] == "energy_feedback":
-                    value = int(event.data["energy"][self.channel_number - 1])
+                    value = int(event.data["energy"])
                     self._state = value
 
                 self.async_write_ha_state()
