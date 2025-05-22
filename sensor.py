@@ -375,8 +375,6 @@ class CoordinatedEnergySensor(BaseSensorEntity, SensorEntity):
         name: str,
         device_id: list,
         channel_number: int,
-        min: int = 0,
-        max: int = 100,
     ) -> None:
         """Initialize the sensor."""
         coordinator = get_coordinator(
