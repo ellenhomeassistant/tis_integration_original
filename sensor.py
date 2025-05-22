@@ -420,4 +420,5 @@ RELEVANT_TYPES: dict[str, type[CoordinatedLUXSensor]] = {
     "lux_sensor": CoordinatedLUXSensor,
     "temperature_sensor": CoordinatedTemperatureSensor,
     "analog_sensor": CoordinatedAnalogSensor,
+    "energy_sensor": CoordinatedEnergySensor,
 }
