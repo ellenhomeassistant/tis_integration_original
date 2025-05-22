@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import os
 
+
 from attr import dataclass
 from TISControlProtocol.api import *
 from TISControlProtocol.Protocols.udp.ProtocolHandler import TISProtocolHandler
@@ -14,7 +15,7 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 
 from .const import DEVICES_DICT, DOMAIN
-
+from . import security_dashboard
 
 @dataclass
 class TISData:
@@ -58,6 +59,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: TISConfigEntry) -> bool:
 
     except Exception as e:
         logging.error(f"Could Not Update TIS Integration: {e}")
+
+
+    security_dashboard.create()
 
     tis_api = TISApi(
         port=int(entry.data["port"]),
