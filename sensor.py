@@ -19,11 +19,12 @@ from .entities import BaseSensorEntity
 
 
 # TODO: remove this
-class TempEntity:
-    def __init__(self, device_id, api, gateway):
+class TISSensorEntity:
+    def __init__(self, device_id, api, gateway, channel_number):
         self.device_id = device_id
         self.api = api
         self.gateway = gateway
+        self.channel_number=channel_number
 
 
 async def async_setup_entry(
@@ -102,6 +103,7 @@ def get_coordinator(
     device_id: list[int],
     gateway: str,
     coordinator_type: str,
+    channel_number: int,
 ) -> SensorUpdateCoordinator:
     """Get or create a SensorUpdateCoordinator for the given device_id.
 
@@ -120,7 +122,7 @@ def get_coordinator(
 
     if coordinator_id not in coordinators:
         logging.info("creating new coordinator")
-        entity = TempEntity(device_id, tis_api, gateway)
+        entity = TISSensorEntity(device_id, tis_api, gateway, channel_number)
         if coordinator_type == "temp_sensor":
             update_packet = protocol_handler.generate_temp_sensor_update_packet(
                 entity=entity
@@ -171,7 +173,7 @@ class CoordinatedTemperatureSensor(BaseSensorEntity, SensorEntity):
         channel_number: int,
     ) -> None:
         """Initialize the sensor."""
-        coordinator = get_coordinator(hass, tis_api, device_id, gateway, "temp_sensor")
+        coordinator = get_coordinator(hass, tis_api, device_id, gateway, "temp_sensor", channel_number)
         super().__init__(coordinator, name, device_id)
         self._attr_icon = "mdi:thermometer"
         self.name = name
@@ -225,7 +227,7 @@ class CoordinatedLUXSensor(BaseSensorEntity, SensorEntity):
     ) -> None:
         """Initialize the sensor."""
         coordinator = get_coordinator(
-            hass, tis_api, device_id, gateway, "health_sensor"
+            hass, tis_api, device_id, gateway, "health_sensor", channel_number
         )
 
         super().__init__(coordinator, name, device_id)
@@ -276,7 +278,7 @@ class CoordinatedAnalogSensor(BaseSensorEntity, SensorEntity):
     ) -> None:
         """Initialize the sensor."""
         coordinator = get_coordinator(
-            hass, tis_api, device_id, gateway, "analog_sensor"
+            hass, tis_api, device_id, gateway, "analog_sensor", channel_number
         )
 
         super().__init__(coordinator, name, device_id)
@@ -307,7 +309,9 @@ class CoordinatedAnalogSensor(BaseSensorEntity, SensorEntity):
 
                 self.async_write_ha_state()
             except Exception as e:
-                logging.error(f"event data error for analog sensor: {event.data} \n error: {e}")
+                logging.error(
+                    f"event data error for analog sensor: {event.data} \n error: {e}"
+                )
 
             normalized = (value - self.min) / (self.max - self.min)  # Normalize to 0–1
             normalized = max(0, min(1, normalized))  # Clamp between 0 and 1
@@ -382,7 +386,7 @@ class CoordinatedEnergySensor(BaseSensorEntity, SensorEntity):
     ) -> None:
         """Initialize the sensor."""
         coordinator = get_coordinator(
-            hass, tis_api, device_id, gateway, "energy_sensor"
+            hass, tis_api, device_id, gateway, "energy_sensor", channel_number
         )
 
         super().__init__(coordinator, name, device_id)
@@ -406,7 +410,9 @@ class CoordinatedEnergySensor(BaseSensorEntity, SensorEntity):
 
                 self.async_write_ha_state()
             except Exception as e:
-                logging.error(f"event data error for energy sensor: {event.data} \n error: {e}")
+                logging.error(
+                    f"event data error for energy sensor: {event.data} \n error: {e}"
+                )
 
             return value
 
