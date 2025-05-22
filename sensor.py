@@ -133,6 +133,10 @@ def get_coordinator(
             update_packet = protocol_handler.generate_update_analog_packet(
                 entity=entity
             )
+        elif coordinator_type == "energy_sensor":
+            update_packet = protocol_handler.generate_update_energy_packet(
+                entity=entity
+            )
         coordinators[coordinator_id] = SensorUpdateCoordinator(
             hass,
             tis_api,
