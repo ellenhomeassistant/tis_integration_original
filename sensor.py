@@ -21,9 +21,12 @@ from .entities import BaseSensorEntity
 # TODO: remove this
 class TISSensorEntity:
     def __init__(self, device_id, api, gateway, channel_number):
+class TISSensorEntity:
+    def __init__(self, device_id, api, gateway, channel_number):
         self.device_id = device_id
         self.api = api
         self.gateway = gateway
+        self.channel_number=channel_number
         self.channel_number=channel_number
 
 
@@ -105,6 +108,12 @@ def get_coordinator(
     gateway: str,
     coordinator_type: str,
     channel_number: int,
+    hass: HomeAssistant,
+    tis_api: TISApi,
+    device_id: list[int],
+    gateway: str,
+    coordinator_type: str,
+    channel_number: int,
 ) -> SensorUpdateCoordinator:
     """Get or create a SensorUpdateCoordinator for the given device_id.
 
@@ -120,9 +129,11 @@ def get_coordinator(
     :rtype: SensorUpdateCoordinator
     """
     coordinator_id = f"{tuple(device_id)}_{coordinator_type}"
+    coordinator_id = f"{tuple(device_id)}_{coordinator_type}"
 
     if coordinator_id not in coordinators:
         logging.info("creating new coordinator")
+        entity = TISSensorEntity(device_id, tis_api, gateway, channel_number)
         entity = TISSensorEntity(device_id, tis_api, gateway, channel_number)
         if coordinator_type == "temp_sensor":
             update_packet = protocol_handler.generate_temp_sensor_update_packet(
@@ -140,6 +151,10 @@ def get_coordinator(
             update_packet = protocol_handler.generate_update_energy_packet(
                 entity=entity
             )
+        elif coordinator_type == "energy_sensor":
+            update_packet = protocol_handler.generate_update_energy_packet(
+                entity=entity
+            )
         coordinators[coordinator_id] = SensorUpdateCoordinator(
             hass,
             tis_api,
@@ -148,6 +163,7 @@ def get_coordinator(
             update_packet,
         )
     return coordinators[coordinator_id]
+
 
 
 protocol_handler = TISProtocolHandler()
@@ -174,6 +190,7 @@ class CoordinatedTemperatureSensor(BaseSensorEntity, SensorEntity):
         channel_number: int,
     ) -> None:
         """Initialize the sensor."""
+        coordinator = get_coordinator(hass, tis_api, device_id, gateway, "temp_sensor", channel_number)
         coordinator = get_coordinator(hass, tis_api, device_id, gateway, "temp_sensor", channel_number)
         super().__init__(coordinator, name, device_id)
         self._attr_icon = "mdi:thermometer"
@@ -230,6 +247,9 @@ class CoordinatedLUXSensor(BaseSensorEntity, SensorEntity):
         coordinator = get_coordinator(
             hass, tis_api, device_id, gateway, "health_sensor", channel_number
         )
+        coordinator = get_coordinator(
+            hass, tis_api, device_id, gateway, "health_sensor", channel_number
+        )
 
         super().__init__(coordinator, name, device_id)
         self._attr_icon = "mdi:brightness-6"
@@ -258,6 +278,7 @@ class CoordinatedLUXSensor(BaseSensorEntity, SensorEntity):
         """Update the state based on the data."""
 
 
+
 class CoordinatedAnalogSensor(BaseSensorEntity, SensorEntity):
     """Representation of a coordinated TIS sensor.
 
@@ -281,6 +302,9 @@ class CoordinatedAnalogSensor(BaseSensorEntity, SensorEntity):
         coordinator = get_coordinator(
             hass, tis_api, device_id, gateway, "analog_sensor", channel_number
         )
+        coordinator = get_coordinator(
+            hass, tis_api, device_id, gateway, "analog_sensor", channel_number
+        )
 
         super().__init__(coordinator, name, device_id)
         self._attr_icon = "mdi:current-ac"
@@ -298,10 +322,18 @@ class CoordinatedAnalogSensor(BaseSensorEntity, SensorEntity):
         @callback
         def handle_analog_feedback(event: Event):
             """Handle the analog update event."""
+            """Handle the analog update event."""
             try:
                 if event.data["feedback_type"] == "analog_feedback":
                     # Map the analog to be within min and max
+                    # Map the analog to be within min and max
                     value = int(event.data["analog"][self.channel_number - 1])
+                    normalized = (value - self.min) / (
+                        self.max - self.min
+                    )  # Normalize to 0–1
+                    normalized = max(0, min(1, normalized))  # Clamp between 0 and 1
+                    self._state = int(normalized * 100)  # Scale to 0–100
+
                     normalized = (value - self.min) / (
                         self.max - self.min
                     )  # Normalize to 0–1
@@ -318,10 +350,19 @@ class CoordinatedAnalogSensor(BaseSensorEntity, SensorEntity):
             normalized = max(0, min(1, normalized))  # Clamp between 0 and 1
             return int(normalized * 100)  # Scale to 0–100
 
+                logging.error(
+                    f"event data error for analog sensor: {event.data} \n error: {e}"
+                )
+
+            normalized = (value - self.min) / (self.max - self.min)  # Normalize to 0–1
+            normalized = max(0, min(1, normalized))  # Clamp between 0 and 1
+            return int(normalized * 100)  # Scale to 0–100
+
         self.hass.bus.async_listen(str(self.device_id), handle_analog_feedback)
 
     def _update_state(self, data):
         """Update the state based on the data."""
+
 
 
 class CPUTemperatureSensor(SensorEntity):
