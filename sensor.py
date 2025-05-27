@@ -75,7 +75,7 @@ async def async_setup_entry(
                             max=max,
                         )
                     )
-                elif sensor_type == "energy_sensor":
+                elif sensor_type == "energy_sensor" or sensor_type == "monthly_energy_sensor":
                     for key in ["current", "voltage", "power"]:
                         pass
                 else:
@@ -392,10 +392,11 @@ class CoordinatedEnergySensor(BaseSensorEntity, SensorEntity):
         device_id: list,
         channel_number: int,
         key: str = None,
+        sensor_type: str = "energy_sensor",
     ) -> None:
         """Initialize the sensor."""
         coordinator = get_coordinator(
-            hass, tis_api, device_id, gateway, "energy_sensor", channel_number
+            hass, tis_api, device_id, gateway, sensor_type, channel_number
         )
 
         super().__init__(coordinator, name, device_id)
