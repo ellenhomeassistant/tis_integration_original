@@ -431,6 +431,10 @@ class CoordinatedEnergySensor(BaseSensorEntity, SensorEntity):
         self._key = key
         self.sensor_type = sensor_type
 
+        logging.warning(
+            f"""Initializing CoordinatedEnergySensor: {self.name}, key: {self._key}, Sensor type: {self.sensor_type}, device_id: {self.device_id}, channel_number: {self.channel_number}"""
+        )
+
     async def async_added_to_hass(self) -> None:
         """Register for the energy event."""
         await super().async_added_to_hass()
@@ -448,15 +452,18 @@ class CoordinatedEnergySensor(BaseSensorEntity, SensorEntity):
                         )
                         self._state = int(event.data["energy"][self._key])
                 elif event.data["feedback_type"] == "monthly_energy_feedback":
-                    logging.warning(f"sensor_type: {self.sensor_type} for name: {self.name}")
+                    logging.warning(
+                        f"sensor_type: {self.sensor_type} for name: {self.name}"
+                    )
+                    logging.warning(
+                        (f"sensor_type: {self.sensor_type} for name: {self.name}")
+                    )
                     if event.data["channel_num"] == self.channel_number:
                         logging.warning(
                             f"Received monthly energy feedback: {event.data}"
                         )
                         logging.warning(f"Key: {self._key}")
-                        logging.warning(
-                            f"Monthly energy value: {event.data['energy']}"
-                        )
+                        logging.warning(f"Monthly energy value: {event.data['energy']}")
                         self._state = event.data["energy"]
 
                 self.async_write_ha_state()
