@@ -33,64 +33,62 @@ async def async_setup_entry(
     """Set up the TIS sensors."""
     # Create an instance of your sensor
     tis_api: TISApi = entry.runtime_data.api
-    # sensor = TemperatureSensor(hass, tis_api, [0x01, 0x08], "luna", "192.168.1.200")
     tis_sensors = []
     for sensor_type, handler in RELEVANT_TYPES.items():
-        for sensor_handler in handler:
-            sensors: list[dict] = await tis_api.get_entities(platform=sensor_type)
-            if sensors and len(sensors) > 0:
-                # exctract the data
-                sensor_entities = [
-                    (
-                        appliance_name,
-                        next(iter(appliance["channels"][0].values())),
-                        appliance["device_id"],
-                        appliance["is_protected"],
-                        appliance["gateway"],
-                        appliance["min"],
-                        appliance["max"],
-                    )
-                    for sensor in sensors
-                    for appliance_name, appliance in sensor.items()
-                ]
-                # create the sensor objects
-                sensor_objects = []
-                for (
+        sensors: list[dict] = await tis_api.get_entities(platform=sensor_type)
+        if sensors and len(sensors) > 0:
+            # exctract the data
+            sensor_entities = [
+                (
                     appliance_name,
-                    channel_number,
-                    device_id,
-                    is_protected,
-                    gateway,
-                    min,
-                    max,
-                ) in sensor_entities:
-                    if sensor_type == "analog_sensor":
-                        sensor_objects.append(
-                            sensor_handler(
-                                hass=hass,
-                                tis_api=tis_api,
-                                gateway=gateway,
-                                name=appliance_name,
-                                device_id=device_id,
-                                channel_number=channel_number,
-                                min=min,
-                                max=max,
-                            )
+                    next(iter(appliance["channels"][0].values())),
+                    appliance["device_id"],
+                    appliance["is_protected"],
+                    appliance["gateway"],
+                    appliance["min"],
+                    appliance["max"],
+                )
+                for sensor in sensors
+                for appliance_name, appliance in sensor.items()
+            ]
+            # create the sensor objects
+            sensor_objects = []
+            for (
+                appliance_name,
+                channel_number,
+                device_id,
+                is_protected,
+                gateway,
+                min,
+                max,
+            ) in sensor_entities:
+                if sensor_type == "analog_sensor":
+                    sensor_objects.append(
+                        handler(
+                            hass=hass,
+                            tis_api=tis_api,
+                            gateway=gateway,
+                            name=appliance_name,
+                            device_id=device_id,
+                            channel_number=channel_number,
+                            min=min,
+                            max=max,
                         )
-                    else:
-                        sensor_objects.append(
-                            sensor_handler(
-                                hass=hass,
-                                tis_api=tis_api,
-                                gateway=gateway,
-                                name=appliance_name,
-                                device_id=device_id,
-                                channel_number=channel_number,
-                            )
+                    )
+                else:
+                    sensor_objects.append(
+                        handler(
+                            hass=hass,
+                            tis_api=tis_api,
+                            gateway=gateway,
+                            name=appliance_name,
+                            device_id=device_id,
+                            channel_number=channel_number,
                         )
+                    )
 
-                # add the sensor objects to the list
-                tis_sensors.extend(sensor_objects)
+            # add the sensor objects to the list
+            tis_sensors.extend(sensor_objects)
 
     cpu_temp_sensor = CPUTemperatureSensor(hass)
     tis_sensors.append(cpu_temp_sensor)
@@ -138,6 +136,10 @@ def get_coordinator(
             )
         elif coordinator_type == "energy_sensor":
             update_packet = protocol_handler.generate_update_energy_packet(
+                entity=entity
+            )
+        elif coordinator_type == "monthly_energy_sensor":
+            update_packet = protocol_handler.generate_update_monthly_energy_packet(
                 entity=entity
             )
         coordinators[coordinator_id] = SensorUpdateCoordinator(
@@ -386,7 +388,7 @@ class CoordinatedEnergySensor(BaseSensorEntity, SensorEntity):
         name: str,
         device_id: list,
         channel_number: int,
-        role: str,
+        key: str,
     ) -> None:
         """Initialize the sensor."""
         coordinator = get_coordinator(
@@ -399,7 +401,7 @@ class CoordinatedEnergySensor(BaseSensorEntity, SensorEntity):
         self.device_id = device_id
         self.channel_number = channel_number
         self._attr_unique_id = f"energy_{self.name}"
-        self._role = role
+        self._key = key
 
     async def async_added_to_hass(self) -> None:
         """Register for the energy event."""
@@ -411,8 +413,60 @@ class CoordinatedEnergySensor(BaseSensorEntity, SensorEntity):
             try:
                 if event.data["feedback_type"] == "energy_feedback":
                     if event.data["channel_num"] == self.channel_number:
-                        value = int(event.data["energy"][self._role])
-                        self._state = value
+                        self._state = int(event.data["energy"][self._key])
+
+                self.async_write_ha_state()
+            except Exception as e:
+                logging.error(
+                    f"event data error for energy sensor: {event.data} \n error: {e}"
+                )
+
+        self.hass.bus.async_listen(str(self.device_id), handle_energy_feedback)
+
+    def _update_state(self, data):
+        """Update the state based on the data."""
+
+
+class CoordinatedMonthlyEnergySensor(BaseSensorEntity, SensorEntity):
+    """Representation of a coordinated TIS sensor.
+
+    :param coordinator: The coordinator object. :type coordinator: SensorUpdateCoordinator
+    :param name: The name of the sensor. :type name: str
+    :param device_id: The device id of the sensor. :type device_id: str
+    """
+
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        tis_api: TISApi,
+        gateway: str,
+        name: str,
+        device_id: list,
+        channel_number: int,
+    ) -> None:
+        """Initialize the sensor."""
+        coordinator = get_coordinator(
+            hass, tis_api, device_id, gateway, "monthly_energy_sensor", channel_number
+        )
+
+        super().__init__(coordinator, name, device_id)
+        self._attr_icon = "mdi:current-ac"
+        self.name = name
+        self.device_id = device_id
+        self.channel_number = channel_number
+        self._attr_unique_id = f"energy_{self.name}"
+
+    async def async_added_to_hass(self) -> None:
+        """Register for the energy event."""
+        await super().async_added_to_hass()
+
+        @callback
+        def handle_energy_feedback(event: Event):
+            """Handle the energy update event."""
+            try:
+                if event.data["feedback_type"] == "monthly_energy_feedback":
+                    if event.data["channel_num"] == self.channel_number:
+                        self._state = event.data["energy"]
 
                 self.async_write_ha_state()
             except Exception as e:
@@ -431,4 +485,5 @@ RELEVANT_TYPES: dict[str, type[CoordinatedLUXSensor]] = {
     "temperature_sensor": CoordinatedTemperatureSensor,
     "analog_sensor": CoordinatedAnalogSensor,
     "energy_sensor": CoordinatedEnergySensor,
+    "monthly_energy_sensor": CoordinatedMonthlyEnergySensor,
 }
