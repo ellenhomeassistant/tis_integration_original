@@ -75,6 +75,9 @@ async def async_setup_entry(
                             max=max,
                         )
                     )
+                elif sensor_type == "energy_sensor":
+                    for key in ["current", "voltage", "power"]:
+                        pass
                 else:
                     sensor_objects.append(
                         handler(
@@ -388,7 +391,7 @@ class CoordinatedEnergySensor(BaseSensorEntity, SensorEntity):
         name: str,
         device_id: list,
         channel_number: int,
-        key: str,
+        key: str = None,
     ) -> None:
         """Initialize the sensor."""
         coordinator = get_coordinator(
@@ -414,59 +417,9 @@ class CoordinatedEnergySensor(BaseSensorEntity, SensorEntity):
                 if event.data["feedback_type"] == "energy_feedback":
                     if event.data["channel_num"] == self.channel_number:
                         self._state = int(event.data["energy"][self._key])
-
-                self.async_write_ha_state()
-            except Exception as e:
-                logging.error(
-                    f"event data error for energy sensor: {event.data} \n error: {e}"
-                )
-
-        self.hass.bus.async_listen(str(self.device_id), handle_energy_feedback)
-
-    def _update_state(self, data):
-        """Update the state based on the data."""
-
-
-class CoordinatedMonthlyEnergySensor(BaseSensorEntity, SensorEntity):
-    """Representation of a coordinated TIS sensor.
-
-    :param coordinator: The coordinator object. :type coordinator: SensorUpdateCoordinator
-    :param name: The name of the sensor. :type name: str
-    :param device_id: The device id of the sensor. :type device_id: str
-    """
-
-    def __init__(
-        self,
-        hass: HomeAssistant,
-        tis_api: TISApi,
-        gateway: str,
-        name: str,
-        device_id: list,
-        channel_number: int,
-    ) -> None:
-        """Initialize the sensor."""
-        coordinator = get_coordinator(
-            hass, tis_api, device_id, gateway, "monthly_energy_sensor", channel_number
-        )
-
-        super().__init__(coordinator, name, device_id)
-        self._attr_icon = "mdi:current-ac"
-        self.name = name
-        self.device_id = device_id
-        self.channel_number = channel_number
-        self._attr_unique_id = f"energy_{self.name}"
-
-    async def async_added_to_hass(self) -> None:
-        """Register for the energy event."""
-        await super().async_added_to_hass()
-
-        @callback
-        def handle_energy_feedback(event: Event):
-            """Handle the energy update event."""
-            try:
-                if event.data["feedback_type"] == "monthly_energy_feedback":
+                elif event.data["feedback_type"] == "monthly_energy_feedback":
                     if event.data["channel_num"] == self.channel_number:
-                        self._state = event.data["energy"]
+                        self._state = event.data["monthly_energy"]
 
                 self.async_write_ha_state()
             except Exception as e:
@@ -485,5 +438,5 @@ RELEVANT_TYPES: dict[str, type[CoordinatedLUXSensor]] = {
     "temperature_sensor": CoordinatedTemperatureSensor,
     "analog_sensor": CoordinatedAnalogSensor,
     "energy_sensor": CoordinatedEnergySensor,
-    "monthly_energy_sensor": CoordinatedMonthlyEnergySensor,
+    "monthly_energy_sensor": CoordinatedEnergySensor,
 }
