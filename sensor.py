@@ -440,6 +440,11 @@ class CoordinatedEnergySensor(BaseSensorEntity, SensorEntity):
             try:
                 if event.data["feedback_type"] == "energy_feedback":
                     if event.data["channel_num"] == self.channel_number:
+                        logging.warning(f"Received energy feedback: {event.data}")
+                        logging.warning(f"Key: {self._key}")
+                        logging.warning(
+                            f"Energy value: {event.data['energy'][self._key]}"
+                        )
                         self._state = int(event.data["energy"][self._key])
                 elif event.data["feedback_type"] == "monthly_energy_feedback":
                     if event.data["channel_num"] == self.channel_number:
