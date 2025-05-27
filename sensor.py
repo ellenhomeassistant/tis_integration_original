@@ -18,7 +18,6 @@ from .coordinator import SensorUpdateCoordinator
 from .entities import BaseSensorEntity
 
 
-# TODO: remove this
 class TISSensorEntity:
     def __init__(self, device_id, api, gateway, channel_number):
         self.device_id = device_id
@@ -75,9 +74,33 @@ async def async_setup_entry(
                             max=max,
                         )
                     )
-                elif sensor_type == "energy_sensor" or sensor_type == "monthly_energy_sensor":
-                    for key in ["current", "voltage", "power"]:
-                        pass
+                elif sensor_type == "energy_sensor":
+                    for key, val in energy_sensor_types.items():
+                        sensor_objects.append(
+                            handler(
+                                hass=hass,
+                                tis_api=tis_api,
+                                gateway=gateway,
+                                name=f"{appliance_name} {val}",
+                                device_id=device_id,
+                                channel_number=channel_number,
+                                key=key,
+                                sensor_type="energy_sensor",
+                            )
+                        )
+
+                    sensor_objects.append(
+                        handler(
+                            hass=hass,
+                            tis_api=tis_api,
+                            gateway=gateway,
+                            name=f"{appliance_name} Monthly Energy",
+                            device_id=device_id,
+                            channel_number=channel_number,
+                            key="monthly_energy",
+                            sensor_type="monthly_energy_sensor",
+                        )
+                    )
                 else:
                     sensor_objects.append(
                         handler(
@@ -157,6 +180,38 @@ def get_coordinator(
 
 protocol_handler = TISProtocolHandler()
 
+energy_sensor_types = {
+    "v1": "Voltage Phase 1",
+    "v2": "Voltage Phase 2",
+    "v3": "Voltage Phase 3",
+    "current_p1": "Current Phase 1",
+    "current_p2": "Current Phase 2",
+    "current_p3": "Current Phase 3",
+    "active_p1": "Active Power Phase 1",
+    "active_p2": "Active Power Phase 2",
+    "active_p3": "Active Power Phase 3",
+    "apparent1": "Apparent Power Phase 1",
+    "apparent2": "Apparent Power Phase 2",
+    "apparent3": "Apparent Power Phase 3",
+    "reactive1": "Reactive Power Phase 1",
+    "reactive2": "Reactive Power Phase 2",
+    "reactive3": "Reactive Power Phase 3",
+    "pf1": "Power Factor Phase 1",
+    "pf2": "Power Factor Phase 2",
+    "pf3": "Power Factor Phase 3",
+    "pa1": "Phase Angle Phase 1",
+    "pa2": "Phase Angle Phase 2",
+    "pa3": "Phase Angle Phase 3",
+    "avg_live_to_neutral": "Average Live to Neutral Voltage",
+    "avg_current": "Average Current",
+    "sum_current": "Sum Current",
+    "total_power": "Total Power",
+    "total_volt_amps": "Total Volt Amps",
+    "total_var": "Total VAR",
+    "total_pf": "Total Power Factor",
+    "total_pa": "Total Phase Angle",
+    "frq": "Frequency",
+}
 _LOGGER = logging.getLogger(__name__)
 coordinators = {}
 
@@ -439,5 +494,4 @@ RELEVANT_TYPES: dict[str, type[CoordinatedLUXSensor]] = {
     "temperature_sensor": CoordinatedTemperatureSensor,
     "analog_sensor": CoordinatedAnalogSensor,
     "energy_sensor": CoordinatedEnergySensor,
-    "monthly_energy_sensor": CoordinatedEnergySensor,
 }
