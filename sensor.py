@@ -448,6 +448,7 @@ class CoordinatedEnergySensor(BaseSensorEntity, SensorEntity):
 
                 self.async_write_ha_state()
             except Exception as e:
+                logging.error(f"error in self.name: {self.name}, self._key: {self._key}, self.sensor_type: {self.sensor_type}")
                 logging.error(
                     f"event data error for energy sensor: {event.data} \n error: {e}"
                 )
