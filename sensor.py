@@ -441,7 +441,7 @@ class CoordinatedEnergySensor(BaseSensorEntity, SensorEntity):
             try:
                 if event.data["feedback_type"] == "energy_feedback" and self.sensor_type == "energy_sensor":
                     if event.data["channel_num"] == self.channel_number:
-                        self._state = int(event.data["energy"].get(self._key, None))
+                        self._state = float(event.data["energy"].get(self._key, None))
                 elif event.data["feedback_type"] == "monthly_energy_feedback" and self.sensor_type == "monthly_energy_sensor":
                     if event.data["channel_num"] == self.channel_number:
                         self._state = event.data["energy"]
