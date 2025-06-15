@@ -14,10 +14,8 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 
-from aiohttp import web
 from .const import DEVICES_DICT, DOMAIN
 from . import security_dashboard
-import uuid
 
 
 @dataclass
@@ -77,7 +75,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: TISConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {"supported_platforms": PLATFORMS})
     try:
         await tis_api.connect()
-        hass.http.register_view(RestartEndpoint(tis_api))
     except ConnectionError as e:
         logging.error("error connecting to TIS api %s", e)
         return False
@@ -92,44 +89,3 @@ async def async_unload_entry(hass: HomeAssistant, entry: TISConfigEntry) -> bool
         return unload_ok
 
     return False
-
-
-class RestartEndpoint(HomeAssistantView):
-    """Restart the Server"""
-
-    url = "/api/restart"
-    name = "api:restart"
-    requires_auth = False
-
-    def __init__(self, tis_api: TISApi):
-        self.tis_api = tis_api
-
-    async def post(self, request):
-        mac_address = request.query.get("mac_address")
-
-        if mac_address is None:
-            logging.info("Required parameters not found in query, parsing request body")
-            data = await request.json()
-            mac_address = data.get("mac_address")
-
-        mac = uuid.getnode()
-        mac = ":".join(("%012X" % mac)[i : i + 2] for i in range(0, 12, 2))
-
-        if mac_address is None:
-            return web.json_response(
-                {"error": "required parameters are missing"}, status=400
-            )
-        elif mac_address != mac:
-            return web.json_response({"error": "Unauthorized"}, status=403)
-
-        logging.info("Restarting Server")
-        try:
-            await self.tis_api.hass.services.async_call(
-                "homeassistant", 
-                "restart",
-                {}
-            )
-        except Exception as e:
-            logging.error(f"Error restarting server: {e}")
-            return web.json_response({"error": "Failed to restart server"}, status=500)
-
