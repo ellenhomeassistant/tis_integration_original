@@ -143,10 +143,9 @@ def get_coordinator(
     :return: The SensorUpdateCoordinator for the given device_id.
     :rtype: SensorUpdateCoordinator
     """
-    coordinator_id = f"{tuple(device_id)}_{coordinator_type}"
+    coordinator_id = f"{tuple(device_id)}_{coordinator_type}" if "energy_sensor" not in coordinator_type else f"{tuple(device_id)}_{coordinator_type}_{channel_number}"
 
     if coordinator_id not in coordinators:
-        logging.info("creating new coordinator")
         entity = TISSensorEntity(device_id, tis_api, gateway, channel_number)
         if coordinator_type == "temp_sensor":
             update_packet = protocol_handler.generate_temp_sensor_update_packet(
@@ -415,7 +414,7 @@ class CoordinatedEnergySensor(BaseSensorEntity, SensorEntity):
         device_id: list,
         channel_number: int,
         key: str = None,
-        sensor_type: str = "energy_sensor",
+        sensor_type: str = None,
     ) -> None:
         """Initialize the sensor."""
         coordinator = get_coordinator(
@@ -430,6 +429,7 @@ class CoordinatedEnergySensor(BaseSensorEntity, SensorEntity):
         self._attr_unique_id = f"energy_{self.name}"
         self._key = key
         self.sensor_type = sensor_type
+        self._attr_state_class = "measurement"
 
     async def async_added_to_hass(self) -> None:
         """Register for the energy event."""
@@ -457,6 +457,10 @@ class CoordinatedEnergySensor(BaseSensorEntity, SensorEntity):
 
     def _update_state(self, data):
         """Update the state based on the data."""
+
+    @property
+    def native_value(self):
+        return self.state
 
 
 RELEVANT_TYPES: dict[str, type[CoordinatedLUXSensor]] = {
