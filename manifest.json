@@ -1,16 +1,13 @@
 {
   "domain": "tis_control",
   "name": "TIS",
-  "codeowners": [
-    "@mustafa744"
-  ],
   "config_flow": true,
   "dependencies": [],
   "documentation": "https://www.home-assistant.io/integrations/tis_control",
   "homekit": {},
   "iot_class": "local_polling",
   "requirements": [
-    "TISControlProtocol==0.8.1",
+    "TISControlProtocol==0.8.2",
     "aiofiles==24.1.0",
     "RPi.GPIO==0.7.1",
     "spidev==3.6",
