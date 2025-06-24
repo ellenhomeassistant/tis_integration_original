@@ -482,7 +482,9 @@ class CoordinatedEnergySensor(BaseSensorEntity, SensorEntity):
                     if event.data["channel_num"] == self.channel_number:
                         month = datetime.now().month
                         is_summer = month in [6, 7, 8, 9]
-                        logging.warning(f"Calculating bill for month: {month}, summer: {is_summer}")
+                        logging.warning(
+                            f"Calculating bill for month: {month}, summer: {is_summer}"
+                        )
 
                         rates = (
                             self.api.bill_configs.get("summer_rates", {})
@@ -495,10 +497,20 @@ class CoordinatedEnergySensor(BaseSensorEntity, SensorEntity):
                         logging.warning(f"Power consumption: {power_consumption}")
 
                         tier = None
+                        logging.warning("tire = None")
                         for rate, index in enumerate(rates):
+                            logging.warning("for rate, index in enumerate(rates):")
                             if power_consumption < rate["min_kw"]:
+                                logging.warning(
+                                    'if power_consumption < rate["min_kw"]:'
+                                )
                                 tier = rates[index - 1]["price_per_kw"]
-                                logging.warning(f"Matched tier: {tier} at index {index - 1}")
+                                logging.warning(
+                                    'tier = rates[index - 1]["price_per_kw"]'
+                                )
+                                logging.warning(
+                                    f"Matched tier: {tier} at index {index - 1}"
+                                )
                                 break
                         logging.warning(f"Final tier: {tier}")
                         if tier is None and len(rates) > 0:
