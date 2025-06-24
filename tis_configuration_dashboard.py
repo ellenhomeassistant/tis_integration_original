@@ -28,7 +28,7 @@ def create():
             config['lovelace']['dashboards']['tis-configuration'] = {
                 'mode': 'yaml',
                 'title': 'TIS Configuration',
-                'icon': 'mdi:earth',
+                'icon': 'mdi:tune',
                 'show_in_sidebar': True,
                 'filename': dashboard_filename
             }
