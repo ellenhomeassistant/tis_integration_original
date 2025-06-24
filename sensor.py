@@ -482,45 +482,24 @@ class CoordinatedEnergySensor(BaseSensorEntity, SensorEntity):
                     if event.data["channel_num"] == self.channel_number:
                         month = datetime.now().month
                         is_summer = month in [6, 7, 8, 9]
-                        logging.warning(
-                            f"Calculating bill for month: {month}, summer: {is_summer}"
-                        )
 
                         rates = (
                             self.api.bill_configs.get("summer_rates", {})
                             if is_summer
                             else self.api.bill_configs.get("winter_rates", {})
                         )
-                        logging.warning(f"Using rates: {rates}")
 
                         power_consumption = event.data["energy"] + 50
-                        logging.warning(f"Power consumption: {power_consumption}")
 
                         tier = None
-                        logging.warning("tire = None")
-                        for rate, index in enumerate(rates):
-                            logging.warning("for rate, index in enumerate(rates):")
+                        for index, rate in enumerate(rates):
                             if power_consumption < rate["min_kw"]:
-                                logging.warning(
-                                    'if power_consumption < rate["min_kw"]:'
-                                )
                                 tier = rates[index - 1]["price_per_kw"]
-                                logging.warning(
-                                    'tier = rates[index - 1]["price_per_kw"]'
-                                )
-                                logging.warning(
-                                    f"Matched tier: {tier} at index {index - 1}"
-                                )
                                 break
-                        logging.warning(f"Final tier: {tier}")
                         if tier is None and len(rates) > 0:
                             tier = rates[-1]["price_per_kw"]
-                            logging.warning(f"No tier matched, using last tier: {tier}")
 
                         self._state = tier * power_consumption
-                        logging.warning(
-                            f"Calculated bill for {self.name}: tier={tier}, consumption={power_consumption}, bill={self._state}"
-                        )
 
                 self.async_write_ha_state()
             except Exception as e:
