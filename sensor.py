@@ -491,7 +491,7 @@ class CoordinatedEnergySensor(BaseSensorEntity, SensorEntity):
                         )
                         logging.warning(f"Using rates: {rates}")
 
-                        power_consumption = event.data["energy"]
+                        power_consumption = event.data["energy"] + 50
                         logging.warning(f"Power consumption: {power_consumption}")
 
                         tier = None
