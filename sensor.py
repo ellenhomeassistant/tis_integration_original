@@ -489,7 +489,7 @@ class CoordinatedEnergySensor(BaseSensorEntity, SensorEntity):
                             else self.api.bill_configs.get("winter_rates", {})
                         )
 
-                        power_consumption = event.data["energy"] + 50
+                        power_consumption = event.data["energy"] + 100
 
                         tier = None
                         for index, rate in enumerate(rates):
@@ -499,7 +499,7 @@ class CoordinatedEnergySensor(BaseSensorEntity, SensorEntity):
                         if tier is None and len(rates) > 0:
                             tier = rates[-1]["price_per_kw"]
 
-                        self._state = tier * power_consumption
+                        self._state = int(tier * power_consumption)
 
                 self.async_write_ha_state()
             except Exception as e:
