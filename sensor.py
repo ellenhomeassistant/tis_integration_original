@@ -17,6 +17,7 @@ from . import TISConfigEntry
 from .coordinator import SensorUpdateCoordinator
 from .entities import BaseSensorEntity
 from .const import ENERGY_SENSOR_TYPES
+from datetime import datetime
 
 
 class TISSensorEntity:
@@ -33,6 +34,7 @@ async def async_setup_entry(
     """Set up the TIS sensors."""
     # Create an instance of your sensor
     tis_api: TISApi = entry.runtime_data.api
+    tis_api.get_bill_configs()
     tis_sensors = []
     for sensor_type, handler in RELEVANT_TYPES.items():
         sensors: list[dict] = await tis_api.get_entities(platform=sensor_type)
@@ -156,7 +158,11 @@ def get_coordinator(
     :return: The SensorUpdateCoordinator for the given device_id.
     :rtype: SensorUpdateCoordinator
     """
-    coordinator_id = f"{tuple(device_id)}_{coordinator_type}" if "energy_sensor" not in coordinator_type else f"{tuple(device_id)}_{coordinator_type}_{channel_number}"
+    coordinator_id = (
+        f"{tuple(device_id)}_{coordinator_type}"
+        if "energy_sensor" not in coordinator_type
+        else f"{tuple(device_id)}_{coordinator_type}_{channel_number}"
+    )
 
     if coordinator_id not in coordinators:
         entity = TISSensorEntity(device_id, tis_api, gateway, channel_number)
@@ -440,6 +446,7 @@ class CoordinatedEnergySensor(BaseSensorEntity, SensorEntity):
 
         super().__init__(coordinator, name, device_id)
         self._attr_icon = "mdi:current-ac"
+        self.api = tis_api
         self.name = name
         self.device_id = device_id
         self.channel_number = channel_number
@@ -456,20 +463,57 @@ class CoordinatedEnergySensor(BaseSensorEntity, SensorEntity):
         def handle_energy_feedback(event: Event):
             """Handle the energy update event."""
             try:
-                if event.data["feedback_type"] == "energy_feedback" and self.sensor_type == "energy_sensor":
+                if (
+                    event.data["feedback_type"] == "energy_feedback"
+                    and self.sensor_type == "energy_sensor"
+                ):
                     if event.data["channel_num"] == self.channel_number:
                         self._state = float(event.data["energy"].get(self._key, None))
-                elif event.data["feedback_type"] == "monthly_energy_feedback" and self.sensor_type == "monthly_energy_sensor":
+                elif (
+                    event.data["feedback_type"] == "monthly_energy_feedback"
+                    and self.sensor_type == "monthly_energy_sensor"
+                ):
                     if event.data["channel_num"] == self.channel_number:
                         self._state = event.data["energy"]
-                elif event.data["feedback_type"] == "monthly_energy_feedback" and self.sensor_type == "bill_energy_sensor":
+                elif (
+                    event.data["feedback_type"] == "monthly_energy_feedback"
+                    and self.sensor_type == "bill_energy_sensor"
+                ):
                     if event.data["channel_num"] == self.channel_number:
-                        tier = 10
-                        self._state = (event.data["energy"] * tier)
+                        month = datetime.now().month
+                        is_summer = month in [6, 7, 8, 9]
+                        logging.warning(f"Calculating bill for month: {month}, summer: {is_summer}")
+
+                        rates = (
+                            self.api.bill_configs.get("summer_rates", {})
+                            if is_summer
+                            else self.api.bill_configs.get("winter_rates", {})
+                        )
+                        logging.warning(f"Using rates: {rates}")
+
+                        power_consumption = event.data["energy"]
+                        logging.warning(f"Power consumption: {power_consumption}")
+
+                        tier = None
+                        for rate, index in enumerate(rates):
+                            if power_consumption < rate["min_kw"]:
+                                tier = rates[index - 1]["price_per_kw"]
+                                logging.warning(f"Matched tier: {tier} at index {index - 1}")
+                                break
+                        if tier is None:
+                            tier = rates[-1]["price_per_kw"]
+                            logging.warning(f"No tier matched, using last tier: {tier}")
+
+                        self._state = tier * power_consumption
+                        logging.warning(
+                            f"Calculated bill for {self.name}: tier={tier}, consumption={power_consumption}, bill={self._state}"
+                        )
 
                 self.async_write_ha_state()
             except Exception as e:
-                logging.error(f"error in self.name: {self.name}, self._key: {self._key}, self.sensor_type: {self.sensor_type}")
+                logging.error(
+                    f"error in self.name: {self.name}, self._key: {self._key}, self.sensor_type: {self.sensor_type}"
+                )
                 logging.error(
                     f"event data error for energy sensor: {event.data} \n error: {e}"
                 )
