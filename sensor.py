@@ -101,6 +101,19 @@ async def async_setup_entry(
                             sensor_type="monthly_energy_sensor",
                         )
                     )
+
+                    sensor_objects.append(
+                        handler(
+                            hass=hass,
+                            tis_api=tis_api,
+                            gateway=gateway,
+                            name=f"Bill {appliance_name}",
+                            device_id=device_id,
+                            channel_number=channel_number,
+                            sensor_type="bill_energy_sensor",
+                        )
+                    )
+
                 else:
                     sensor_objects.append(
                         handler(
@@ -445,6 +458,9 @@ class CoordinatedEnergySensor(BaseSensorEntity, SensorEntity):
                 elif event.data["feedback_type"] == "monthly_energy_feedback" and self.sensor_type == "monthly_energy_sensor":
                     if event.data["channel_num"] == self.channel_number:
                         self._state = event.data["energy"]
+                elif event.data["feedback_type"] == "monthly_energy_feedback" and self.sensor_type == "bill_energy_sensor":
+                    if event.data["channel_num"] == self.channel_number:
+                        self._state = (float(event.data["energy"]) * 10)
 
                 self.async_write_ha_state()
             except Exception as e:
