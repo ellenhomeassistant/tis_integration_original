@@ -500,7 +500,8 @@ class CoordinatedEnergySensor(BaseSensorEntity, SensorEntity):
                                 tier = rates[index - 1]["price_per_kw"]
                                 logging.warning(f"Matched tier: {tier} at index {index - 1}")
                                 break
-                        if tier is None:
+                        logging.warning(f"Final tier: {tier}")
+                        if tier is None and len(rates) > 0:
                             tier = rates[-1]["price_per_kw"]
                             logging.warning(f"No tier matched, using last tier: {tier}")
 
