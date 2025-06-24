@@ -34,7 +34,7 @@ async def async_setup_entry(
     """Set up the TIS sensors."""
     # Create an instance of your sensor
     tis_api: TISApi = entry.runtime_data.api
-    tis_api.get_bill_configs()
+    await tis_api.get_bill_configs()
     tis_sensors = []
     for sensor_type, handler in RELEVANT_TYPES.items():
         sensors: list[dict] = await tis_api.get_entities(platform=sensor_type)
