@@ -15,7 +15,7 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 
 from .const import DEVICES_DICT, DOMAIN
-from . import security_dashboard
+from . import tis_configuration_dashboard
 
 
 @dataclass
@@ -61,7 +61,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: TISConfigEntry) -> bool:
     # except Exception as e:
     #     logging.error(f"Could Not Update TIS Integration: {e}")
 
-    security_dashboard.create()
+    tis_configuration_dashboard.create()
 
     tis_api = TISApi(
         port=int(entry.data["port"]),
