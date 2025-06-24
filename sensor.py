@@ -464,7 +464,8 @@ class CoordinatedEnergySensor(BaseSensorEntity, SensorEntity):
                         self._state = event.data["energy"]
                 elif event.data["feedback_type"] == "monthly_energy_feedback" and self.sensor_type == "bill_energy_sensor":
                     if event.data["channel_num"] == self.channel_number:
-                        self._state = (float(event.data["energy"]) * 10)
+                        tier = 10
+                        self._state = (event.data["energy"] * tier)
 
                 self.async_write_ha_state()
             except Exception as e:
