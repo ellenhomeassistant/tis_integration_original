@@ -489,7 +489,7 @@ class CoordinatedEnergySensor(BaseSensorEntity, SensorEntity):
                             else self.api.bill_configs.get("winter_rates", {})
                         )
 
-                        power_consumption = event.data["energy"] + 100
+                        power_consumption = event.data["energy"]
 
                         tier = None
                         for index, rate in enumerate(rates):
