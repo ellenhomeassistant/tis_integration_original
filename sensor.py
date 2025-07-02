@@ -331,7 +331,7 @@ class CoordinatedAnalogSensor(BaseSensorEntity, SensorEntity):
         channel_number: int,
         min: int = 0,
         max: int = 100,
-        settings = None,
+        settings=None,
     ) -> None:
         """Initialize the sensor."""
         coordinator = get_coordinator(
@@ -346,10 +346,12 @@ class CoordinatedAnalogSensor(BaseSensorEntity, SensorEntity):
         self.min = min
         self.max = max
         self._attr_unique_id = f"sensor_{self.name}"
+        logging.warning(f'settings: {settings}')
         if settings:
             settings = json.loads(settings)
             self.min_capacity = settings.get("min_capacity", 0)
             self.max_capacity = settings.get("max_capacity", 100)
+            logging.warning(f"min: {self.min_capacity} ,, max {self.max_capacity}")
         else:
             raise ValueError(
                 "min and max capacity values are required for analog sensors"
@@ -366,12 +368,17 @@ class CoordinatedAnalogSensor(BaseSensorEntity, SensorEntity):
                 if event.data["feedback_type"] == "analog_feedback":
                     # Map the analog to be within min and max
                     value = int(event.data["analog"][self.channel_number - 1])
+                    logging.warning(f"value from event: {value}")
                     normalized = (value - self.min) / (
                         self.max - self.min
                     )  # Normalize to 0–1
                     normalized = max(0, min(1, normalized))  # Clamp between 0 and 1
-                    value = self.min_capacity + (self.max_capacity - self.min_capacity) * normalized / 100
-                    self._state = int(value)  # Scale to 0–100
+                    logging.warning(f"normalized: {normalized}")
+                    self._state = int(
+                        self.min_capacity
+                        + (self.max_capacity - self.min_capacity) * normalized / 100
+                    )
+                    logging.warning(f"state: {self._state}")
 
                 self.async_write_ha_state()
             except Exception as e:
