@@ -1,7 +1,7 @@
 """Sensor platform for TIS Control."""
 
 from datetime import timedelta
-import logging
+import logging, json
 
 from gpiozero import CPUTemperature  # type: ignore
 from TISControlProtocol.api import TISApi
@@ -49,6 +49,7 @@ async def async_setup_entry(
                     appliance["gateway"],
                     appliance["min"],
                     appliance["max"],
+                    appliance["settings"],
                 )
                 for sensor in sensors
                 for appliance_name, appliance in sensor.items()
@@ -63,6 +64,7 @@ async def async_setup_entry(
                 gateway,
                 min,
                 max,
+                settings,
             ) in sensor_entities:
                 if sensor_type == "analog_sensor":
                     sensor_objects.append(
@@ -75,6 +77,7 @@ async def async_setup_entry(
                             channel_number=channel_number,
                             min=min,
                             max=max,
+                            settings=settings,
                         )
                     )
                 elif sensor_type == "energy_sensor":
@@ -328,6 +331,7 @@ class CoordinatedAnalogSensor(BaseSensorEntity, SensorEntity):
         channel_number: int,
         min: int = 0,
         max: int = 100,
+        settings = None,
     ) -> None:
         """Initialize the sensor."""
         coordinator = get_coordinator(
@@ -342,6 +346,14 @@ class CoordinatedAnalogSensor(BaseSensorEntity, SensorEntity):
         self.min = min
         self.max = max
         self._attr_unique_id = f"sensor_{self.name}"
+        if settings:
+            settings = json.loads(settings)
+            self.min_capacity = settings.get("min_capacity", 0)
+            self.max_capacity = settings.get("max_capacity", 100)
+        else:
+            raise ValueError(
+                "min and max capacity values are required for analog sensors"
+            )
 
     async def async_added_to_hass(self) -> None:
         """Register for the analog event."""
@@ -358,7 +370,8 @@ class CoordinatedAnalogSensor(BaseSensorEntity, SensorEntity):
                         self.max - self.min
                     )  # Normalize to 0–1
                     normalized = max(0, min(1, normalized))  # Clamp between 0 and 1
-                    self._state = int(normalized * 100)  # Scale to 0–100
+                    value = self.min_capacity + (self.max_capacity - self.min_capacity) * normalized / 100
+                    self._state = int(value)  # Scale to 0–100
 
                 self.async_write_ha_state()
             except Exception as e:
