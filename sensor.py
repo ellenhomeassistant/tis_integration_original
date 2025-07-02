@@ -366,27 +366,20 @@ class CoordinatedAnalogSensor(BaseSensorEntity, SensorEntity):
                 if event.data["feedback_type"] == "analog_feedback":
                     # Map the analog to be within min and max
                     value = int(event.data["analog"][self.channel_number - 1])
-                    logging.warning(f"value from event: {value}")
                     normalized = (value - self.min) / (
                         self.max - self.min
                     )  # Normalize to 0–1
                     normalized = max(0, min(1, normalized))  # Clamp between 0 and 1
-                    logging.warning(f"normalized: {normalized}")
                     self._state = int(
                         self.min_capacity
                         + (self.max_capacity - self.min_capacity) * normalized
                     )
-                    logging.warning(f"state: {self._state}")
 
                 self.async_write_ha_state()
             except Exception as e:
                 logging.error(
                     f"event data error for analog sensor: {event.data} \n error: {e}"
                 )
-
-            normalized = (value - self.min) / (self.max - self.min)  # Normalize to 0–1
-            normalized = max(0, min(1, normalized))  # Clamp between 0 and 1
-            return int(normalized * 100)  # Scale to 0–100
 
         self.hass.bus.async_listen(str(self.device_id), handle_analog_feedback)
 
