@@ -346,12 +346,10 @@ class CoordinatedAnalogSensor(BaseSensorEntity, SensorEntity):
         self.min = min
         self.max = max
         self._attr_unique_id = f"sensor_{self.name}"
-        logging.warning(f'settings: {settings}')
         if settings:
             settings = json.loads(settings)
-            self.min_capacity = settings.get("min_capacity", 0)
-            self.max_capacity = settings.get("max_capacity", 100)
-            logging.warning(f"min: {self.min_capacity} ,, max {self.max_capacity} ,, types are min: {type(self.min_capacity)} ,, max {type(self.max_capacity)}")
+            self.min_capacity = int(settings.get("min_capacity", 0))
+            self.max_capacity = int(settings.get("max_capacity", 100))
         else:
             raise ValueError(
                 "min and max capacity values are required for analog sensors"
