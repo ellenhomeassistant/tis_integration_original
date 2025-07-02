@@ -374,7 +374,7 @@ class CoordinatedAnalogSensor(BaseSensorEntity, SensorEntity):
                     logging.warning(f"normalized: {normalized}")
                     self._state = int(
                         self.min_capacity
-                        + (self.max_capacity - self.min_capacity) * normalized / 100
+                        + (self.max_capacity - self.min_capacity) * normalized
                     )
                     logging.warning(f"state: {self._state}")
 
