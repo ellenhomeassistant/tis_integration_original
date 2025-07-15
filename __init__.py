@@ -56,7 +56,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: TISConfigEntry) -> bool:
     config_path = os.path.join(base_dir, "configuration.yaml")
 
     async with aiofiles.open(config_path, "a") as f:
-        if await f.read().find(http_config) == -1:
+        content = await f.read()
+        if content.find(http_config) == -1:
             logging.warning("adding http configuration to configuration.yaml")
             await f.write("\n" + http_config + "\n")
         else:
