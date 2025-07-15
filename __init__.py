@@ -45,7 +45,7 @@ protocol_handler = TISProtocolHandler()
 async def async_setup_entry(hass: HomeAssistant, entry: TISConfigEntry) -> bool:
     """Set up TISControl from a config entry."""
 
-    tis_configuration_dashboard.create()
+    hass.async_add_executor_job(tis_configuration_dashboard.create())
 
     current_dir = os.path.dirname(__file__)
     base_dir = os.path.abspath(os.path.join(current_dir, "../../"))
@@ -56,7 +56,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: TISConfigEntry) -> bool:
     async with aiofiles.open(config_path, "r") as f:
         contents = await f.read()
 
-    # Load YAML in executor
     config_data = await hass.async_add_executor_job(yaml.load, contents)
 
     http_settings = {"use_x_forwarded_for": True, "trusted_proxies": ["172.30.33.0/24"]}
@@ -65,7 +64,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: TISConfigEntry) -> bool:
         logging.warning("Adding HTTP configuration to configuration.yaml")
         config_data["http"] = http_settings
 
-        # Dump YAML in executor
         buffer = io.StringIO()
         await hass.async_add_executor_job(yaml.dump, config_data, buffer)
 
