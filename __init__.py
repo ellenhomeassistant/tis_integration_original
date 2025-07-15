@@ -55,13 +55,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: TISConfigEntry) -> bool:
     base_dir = os.path.abspath(os.path.join(current_dir, "../../"))
     config_path = os.path.join(base_dir, "configuration.yaml")
 
-    async with aiofiles.open(config_path, "a") as f:
-        content = await f.read()
-        if content.find(http_config) == -1:
-            logging.warning("adding http configuration to configuration.yaml")
+    async with aiofiles.open(config_path, "r") as f:
+        contents = await f.read()
+
+    if http_config not in contents:
+        logging.warning("Adding HTTP configuration to configuration.yaml")
+        async with aiofiles.open(config_path, "a") as f:
             await f.write("\n" + http_config + "\n")
-        else:
-            logging.warning()("http configuration already exists in configuration.yaml")
+    else:
+        logging.info("HTTP configuration already exists in configuration.yaml")
 
     tis_api = TISApi(
         port=int(entry.data["port"]),
