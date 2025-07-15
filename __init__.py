@@ -45,9 +45,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: TISConfigEntry) -> bool:
 
     tis_configuration_dashboard.create()
     http_config = """http:
-    use_x_forwarded_for: true
-    trusted_proxies:
-    - 172.30.33.0/24
+  use_x_forwarded_for: true
+  trusted_proxies:
+  - 172.30.33.0/24
     """
 
     current_dir = os.path.dirname(__file__)
