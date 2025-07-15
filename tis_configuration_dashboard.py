@@ -34,7 +34,6 @@ def create():
                 'require_admin': True
             }
 
-
         # 3. Save configuration.yaml
         with open(config_path, 'w') as f:
             yaml.dump(config, f)
