@@ -45,7 +45,7 @@ protocol_handler = TISProtocolHandler()
 async def async_setup_entry(hass: HomeAssistant, entry: TISConfigEntry) -> bool:
     """Set up TISControl from a config entry."""
 
-    hass.async_add_executor_job(tis_configuration_dashboard.create())
+    tis_configuration_dashboard.create()
 
     current_dir = os.path.dirname(__file__)
     base_dir = os.path.abspath(os.path.join(current_dir, "../../"))
