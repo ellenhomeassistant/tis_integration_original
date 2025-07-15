@@ -18,6 +18,7 @@ from .const import DEVICES_DICT, DOMAIN
 from . import tis_configuration_dashboard
 import aiofiles
 
+
 @dataclass
 class TISData:
     """TISControl data stored in the ConfigEntry."""
@@ -51,9 +52,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: TISConfigEntry) -> bool:
       - 172.30.33.0/24
     """
 
-    async with aiofiles.open('/homeassistant/configuration.yaml', 'a') as f:
+    async with aiofiles.open("/homeassistant/configuration.yaml", "a") as f:
         if await f.read().find(http_config) == -1:
-            await f.write('\n' + http_config + '\n')
+            logging.warning("adding http configuration to configuration.yaml")
+            await f.write("\n" + http_config + "\n")
+        else:
+            logging.warning()("http configuration already exists in configuration.yaml")
 
     tis_api = TISApi(
         port=int(entry.data["port"]),
