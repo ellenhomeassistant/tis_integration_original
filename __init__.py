@@ -16,7 +16,7 @@ from homeassistant.core import HomeAssistant
 
 from .const import DEVICES_DICT, DOMAIN
 from . import tis_configuration_dashboard
-
+import aiofiles
 
 @dataclass
 class TISData:
@@ -44,6 +44,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: TISConfigEntry) -> bool:
     """Set up TISControl from a config entry."""
 
     tis_configuration_dashboard.create()
+    http_config = """
+    http:
+      use_x_forwarded_for: true
+      trusted_proxies:
+      - 172.30.33.0/24
+    """
+
+    async with aiofiles.open('/homeassistant/configuration.yaml', 'a') as f:
+        if await f.read().find(http_config) == -1:
+            await f.write('\n' + http_config + '\n')
 
     tis_api = TISApi(
         port=int(entry.data["port"]),
