@@ -44,11 +44,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: TISConfigEntry) -> bool:
     """Set up TISControl from a config entry."""
 
     tis_configuration_dashboard.create()
-    http_config = """
-http:
-  use_x_forwarded_for: true
-  trusted_proxies:
-  - 172.30.33.0/24
+    http_config = """http:
+    use_x_forwarded_for: true
+    trusted_proxies:
+    - 172.30.33.0/24
     """
 
     current_dir = os.path.dirname(__file__)
