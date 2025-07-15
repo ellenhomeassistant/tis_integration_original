@@ -42,24 +42,6 @@ protocol_handler = TISProtocolHandler()
 
 async def async_setup_entry(hass: HomeAssistant, entry: TISConfigEntry) -> bool:
     """Set up TISControl from a config entry."""
-    # try:
-    #     current_directory = os.getcwd()
-    #     os.chdir("/config/custom_components/tis_integration")
-    #     reset = os.system("git reset --hard HEAD")
-    #     fetch = os.system("git fetch --depth 1 origin main")
-    #     reset_to_origin = os.system("git reset --hard origin/main")
-
-    #     os.chdir(current_directory)
-
-    #     if fetch == 0 and reset == 0 and reset_to_origin == 0:
-    #         logging.warning("Updated TIS Integrations")
-    #     else:
-    #         logging.warning(
-    #             f"Could Not Update TIS Integration: exit error {fetch}, {reset}, {reset_to_origin}"
-    #         )
-
-    # except Exception as e:
-    #     logging.error(f"Could Not Update TIS Integration: {e}")
 
     tis_configuration_dashboard.create()
 
