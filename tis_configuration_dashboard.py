@@ -30,7 +30,8 @@ def create():
                 'title': 'TIS Configuration',
                 'icon': 'mdi:tune',
                 'show_in_sidebar': True,
-                'filename': dashboard_filename
+                'filename': dashboard_filename,
+                'require_admin': True
             }
 
 
