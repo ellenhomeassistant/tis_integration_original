@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import logging
-# import os
-
+import os
 
 from attr import dataclass
 from TISControlProtocol.api import *
@@ -52,7 +51,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: TISConfigEntry) -> bool:
       - 172.30.33.0/24
     """
 
-    async with aiofiles.open("/homeassistant/configuration.yaml", "a") as f:
+    current_dir = os.path.dirname(__file__)
+    base_dir = os.path.abspath(os.path.join(current_dir, "../../"))
+    config_path = os.path.join(base_dir, "configuration.yaml")
+
+    async with aiofiles.open(config_path, "a") as f:
         if await f.read().find(http_config) == -1:
             logging.warning("adding http configuration to configuration.yaml")
             await f.write("\n" + http_config + "\n")
