@@ -16,6 +16,8 @@ from homeassistant.core import HomeAssistant
 from .const import DEVICES_DICT, DOMAIN
 from . import tis_configuration_dashboard
 import aiofiles
+import ruamel.yaml
+import io
 
 
 @dataclass
@@ -44,23 +46,31 @@ async def async_setup_entry(hass: HomeAssistant, entry: TISConfigEntry) -> bool:
     """Set up TISControl from a config entry."""
 
     tis_configuration_dashboard.create()
-    http_config = """http:
-  use_x_forwarded_for: true
-  trusted_proxies:
-  - 172.30.33.0/24
-    """
 
     current_dir = os.path.dirname(__file__)
     base_dir = os.path.abspath(os.path.join(current_dir, "../../"))
     config_path = os.path.join(base_dir, "configuration.yaml")
 
+    yaml = ruamel.yaml.YAML()
+
     async with aiofiles.open(config_path, "r") as f:
         contents = await f.read()
 
-    if http_config not in contents:
+    # Load YAML in executor
+    config_data = await hass.async_add_executor_job(yaml.load, contents)
+
+    http_settings = {"use_x_forwarded_for": True, "trusted_proxies": ["172.30.33.0/24"]}
+
+    if "http" not in config_data or config_data["http"] != http_settings:
         logging.warning("Adding HTTP configuration to configuration.yaml")
-        async with aiofiles.open(config_path, "a") as f:
-            await f.write("\n" + http_config + "\n")
+        config_data["http"] = http_settings
+
+        # Dump YAML in executor
+        buffer = io.StringIO()
+        await hass.async_add_executor_job(yaml.dump, config_data, buffer)
+
+        async with aiofiles.open(config_path, "w") as f:
+            await f.write(buffer.getvalue())
     else:
         logging.info("HTTP configuration already exists in configuration.yaml")
 
