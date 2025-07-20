@@ -27,6 +27,7 @@ from . import TISConfigEntry
 
 handler = TISProtocolHandler()
 
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: TISConfigEntry,
@@ -140,7 +141,7 @@ class TISLight(LightEntity):
         self._attr_state = False
         self._attr_brightness = None
         self.listener = None
-        self.broadcast_channel =255
+        self.broadcast_channel = 255
         self._attr_unique_id = f"{self.name}_{self.channel_number}"
 
         self.setup_light()
@@ -169,7 +170,7 @@ class TISLight(LightEntity):
                         self._attr_state = int(channel_value) != 0
                         self._attr_brightness = int((channel_value / 100) * 255)
                     self.async_write_ha_state()
-                
+
                 elif self.channel_number != self.broadcast_channel:
                     if event.data["feedback_type"] == "binary_feedback":
                         n_bytes = ceil(event.data["additional_bytes"][0] / 8)
@@ -236,7 +237,7 @@ class TISLight(LightEntity):
             self._attr_state = True
             self._attr_brightness = kwargs.get(ATTR_BRIGHTNESS, 255)
         else:
-            # set light to unkown
+            # set light to unknown
             self._attr_state = None
             self._attr_brightness = None
         self.async_write_ha_state()
@@ -249,7 +250,7 @@ class TISLight(LightEntity):
             self._attr_brightness = 0
             self._attr_state = False
         else:
-            # set light to unkown
+            # set light to unknown
             self._attr_state = None
             self._attr_brightness = None
         self.async_write_ha_state()
@@ -276,12 +277,12 @@ class TISRGBLight(LightEntity):
         self.g_channel = int(g_channel)
         self.b_channel = int(b_channel)
         self.rgb_value_flags = [0, 0, 0]
-        # hass atrs
+        # hass atttrs
         self._attr_name = light_name
         self._attr_state = None
         self._attr_rgb_color = None
         self.listener = None
-        self.broadcast_channel =255
+        self.broadcast_channel = 255
         self._attr_unique_id = (
             f"{self.name}_{self.r_channel}_{self.g_channel}_{self.b_channel}"
         )
@@ -301,7 +302,6 @@ class TISRGBLight(LightEntity):
         @callback
         async def handle_event(event: Event):
             """Handle the event."""
-            # check if event is for this switch
             if event.event_type == str(self.device_id):
                 if event.data["feedback_type"] == "control_response":
                     channel_value = event.data["additional_bytes"][2]
@@ -357,7 +357,7 @@ class TISRGBLight(LightEntity):
                     self._attr_state = STATE_UNKNOWN
 
         self.listener = self.hass.bus.async_listen(str(self.device_id), handle_event)
-        # send update 5 times or untill recieveing a state
+        # send update 5 times or until receiving a state
         for _i in range(5):
             if self._attr_rgb_color is None:
                 _ = await self.api.protocol.sender.send_packet(self.update_packet)
@@ -461,14 +461,14 @@ class TISRGBWLight(LightEntity):
         self.g_channel = int(g_channel)
         self.b_channel = int(b_channel)
         self.w_channel = int(w_channel)
-        # hass atrs
+        # hass attrs
         self._attr_name = light_name
         self._attr_state = None
         self._attr_brightness = None
         self._attr_rgbw_color = None
         self.rgbw_value_flags = [0, 0, 0, 0]
         self.listener = None
-        self.broadcast_channel =255
+        self.broadcast_channel = 255
         self._attr_unique_id = f"{self.name}_{self.r_channel}_{self.g_channel}_{self.b_channel}_{self.w_channel}"
         self.setup_light()
 
@@ -538,12 +538,14 @@ class TISRGBWLight(LightEntity):
                         w_value = (additional_bytes[self.w_channel] / 100) * 255
 
                         self._attr_rgbw_color = (r_value, g_value, b_value, w_value)
-                        self._attr_state = bool(r_value or g_value or b_value or w_value)
+                        self._attr_state = bool(
+                            r_value or g_value or b_value or w_value
+                        )
                 elif event.data["feedback_type"] == "offline_device":
                     self._attr_state = STATE_UNKNOWN
 
         self.listener = self.hass.bus.async_listen(str(self.device_id), handle_event)
-        # send update 5 times or untill recieveing a state
+        # send update 5 times or until receiving a state
         for _i in range(5):
             if self._attr_rgbw_color is None:
                 _ = await self.api.protocol.sender.send_packet(self.update_packet)
