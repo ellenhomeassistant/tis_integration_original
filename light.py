@@ -277,7 +277,7 @@ class TISRGBLight(LightEntity):
         self.g_channel = int(g_channel)
         self.b_channel = int(b_channel)
         self.rgb_value_flags = [0, 0, 0]
-        # hass atttrs
+        # hass attrs
         self._attr_name = light_name
         self._attr_state = None
         self._attr_rgb_color = None

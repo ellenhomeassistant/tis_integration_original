@@ -21,7 +21,7 @@ import logging
 
 
 from . import TISConfigEntry
-# hello
+
 async def async_setup_entry(
     hass: HomeAssistant, entry: TISConfigEntry, async_add_devices: AddEntitiesCallback
 ) -> None:
