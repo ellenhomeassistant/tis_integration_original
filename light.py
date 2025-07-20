@@ -331,28 +331,27 @@ class TISRGBLight(LightEntity):
                         self.rgb_value_flags = [0, 0, 0]
                         self.async_write_ha_state()
 
-                elif self.channel_number != self.broadcast_channel:
-                    if event.data["feedback_type"] == "update_response":
-                        additional_bytes = event.data["additional_bytes"]
-                        channel_number = event.data["channel_number"]
+                elif event.data["feedback_type"] == "update_response":
+                    additional_bytes = event.data["additional_bytes"]
+                    channel_number = event.data["channel_number"]
 
-                        if self._attr_rgb_color is None:
-                            self._attr_rgb_color = [0, 0, 0]
-                        if channel_number == self.r_channel:
-                            self._attr_rgb_color[0] = int(
-                                (additional_bytes[channel_number] / 100) * 255
-                            )
-                        elif channel_number == self.g_channel:
-                            self._attr_rgb_color[1] = int(
-                                (additional_bytes[channel_number] / 100) * 255
-                            )
-                        elif channel_number == self.b_channel:
-                            self._attr_rgb_color[2] = int(
-                                (additional_bytes[channel_number] / 100) * 255
-                            )
-                        self._attr_state = bool(
-                            self.r_channel or self.g_channel or self.b_channel
+                    if self._attr_rgb_color is None:
+                        self._attr_rgb_color = [0, 0, 0]
+                    if channel_number == self.r_channel:
+                        self._attr_rgb_color[0] = int(
+                            (additional_bytes[channel_number] / 100) * 255
                         )
+                    elif channel_number == self.g_channel:
+                        self._attr_rgb_color[1] = int(
+                            (additional_bytes[channel_number] / 100) * 255
+                        )
+                    elif channel_number == self.b_channel:
+                        self._attr_rgb_color[2] = int(
+                            (additional_bytes[channel_number] / 100) * 255
+                        )
+                    self._attr_state = bool(
+                        self.r_channel or self.g_channel or self.b_channel
+                    )
                 elif event.data["feedback_type"] == "offline_device":
                     self._attr_state = STATE_UNKNOWN
 
@@ -525,22 +524,16 @@ class TISRGBWLight(LightEntity):
                         self.rgbw_value_flags[3] = 1
                     if self.rgbw_value_flags == [1, 1, 1, 1]:
                         self.async_write_ha_state()
-                elif self.channel_number != self.broadcast_channel:
-                    if event.data["feedback_type"] == "update_response":
-                        additional_bytes = event.data["additional_bytes"]
+                elif event.data["feedback_type"] == "update_response":
+                    additional_bytes = event.data["additional_bytes"]
 
-                        r_value = (additional_bytes[self.r_channel] / 100) * 255
+                    r_value = (additional_bytes[self.r_channel] / 100) * 255
+                    g_value = (additional_bytes[self.g_channel] / 100) * 255
+                    b_value = (additional_bytes[self.b_channel] / 100) * 255
+                    w_value = (additional_bytes[self.w_channel] / 100) * 255
 
-                        g_value = (additional_bytes[self.g_channel] / 100) * 255
-
-                        b_value = (additional_bytes[self.b_channel] / 100) * 255
-
-                        w_value = (additional_bytes[self.w_channel] / 100) * 255
-
-                        self._attr_rgbw_color = (r_value, g_value, b_value, w_value)
-                        self._attr_state = bool(
-                            r_value or g_value or b_value or w_value
-                        )
+                    self._attr_rgbw_color = (r_value, g_value, b_value, w_value)
+                    self._attr_state = bool(r_value or g_value or b_value or w_value)
                 elif event.data["feedback_type"] == "offline_device":
                     self._attr_state = STATE_UNKNOWN
 
