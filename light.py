@@ -394,9 +394,11 @@ class TISRGBLight(LightEntity):
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the light on."""
         # print all kwargs
-        logging.info(f"kwargs: {kwargs}")
+        logging.warning(f"kwargs: {kwargs}")
         try:
+            logging.warning(f'ATTR_RGB_COLOR: {kwargs[ATTR_RGB_COLOR]}')
             color = kwargs[ATTR_RGB_COLOR]
+            logging.warning(f'color: {color}')
             # map color from 255 to 100
             color = tuple([int((c / 255) * 100) for c in color])
             r_packet, g_packet, b_packet = self.generate_rgb_packets(self, color)
