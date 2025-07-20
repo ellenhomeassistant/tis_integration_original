@@ -434,8 +434,12 @@ class TISRGBLight(LightEntity):
                 if brightness == 0:
                     self._attr_state = False
 
+                logging.warning(f"brightness: {brightness}")
+
                 color = self._attr_rgb_color or (0, 0, 0)
+                logging.warning(f"current color: {color}")
                 color = tuple(int(brightness * c) for c in color)
+                logging.warning(f"brightened color: {color}")
                 self._attr_rgb_color = color
             else:
                 logging.warning(
