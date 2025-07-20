@@ -402,7 +402,7 @@ class TISRGBLight(LightEntity):
             elif brightness is not None:
                 brightness /= 255
 
-                color = self._attr_rgb_color or (0, 0, 0)
+                color = self.default_color or (0, 0, 0)
                 color = tuple([int(brightness * c * 100 / 255) for c in color])
 
                 r_packet, g_packet, b_packet = self.generate_rgb_packets(self, color)
@@ -431,7 +431,7 @@ class TISRGBLight(LightEntity):
                     self._attr_state = False
                 else:
                     self._attr_state = True
-                self._attr_rgb_color = self.default_color or (0, 0, 0)
+                self._attr_rgb_color = tuple([min(int(c * 255 / 100), 255) for c in color])
             else:
                 logging.warning(
                     "Neither color nor brightness provided, using default color."
