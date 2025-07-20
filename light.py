@@ -286,6 +286,7 @@ class TISRGBLight(LightEntity):
         self._attr_unique_id = (
             f"{self.name}_{self.r_channel}_{self.g_channel}_{self.b_channel}"
         )
+        self.default_color = (0, 0, 0)
 
         self.setup_light()
 
@@ -303,38 +304,7 @@ class TISRGBLight(LightEntity):
         async def handle_event(event: Event):
             """Handle the event."""
             if event.event_type == str(self.device_id):
-                if event.data["feedback_type"] == "control_response":
-                    channel_value = event.data["additional_bytes"][2]
-                    channel_number = event.data["channel_number"]
-                    if int(channel_number) == self.r_channel:
-                        logging.warning(f"red channel value: {channel_value}")
-                        self._attr_rgb_color = (
-                            int((channel_value / 100) * 255),
-                            self._attr_rgb_color[1],
-                            self._attr_rgb_color[2],
-                        )
-                        self.rgb_value_flags[0] = 1
-                    elif int(channel_number) == self.g_channel:
-                        logging.warning(f"green channel value: {channel_value}")
-                        self._attr_rgb_color = (
-                            self._attr_rgb_color[0],
-                            int((channel_value / 100) * 255),
-                            self._attr_rgb_color[2],
-                        )
-                        self.rgb_value_flags[1] = 1
-                    elif int(channel_number) == self.b_channel:
-                        logging.warning(f"blue channel value: {channel_value}")
-                        self._attr_rgb_color = (
-                            self._attr_rgb_color[0],
-                            self._attr_rgb_color[1],
-                            int((channel_value / 100) * 255),
-                        )
-                        self.rgb_value_flags[2] = 1
-                    if self.rgb_value_flags == [1, 1, 1]:
-                        self.rgb_value_flags = [0, 0, 0]
-                        self.async_write_ha_state()
-
-                elif event.data["feedback_type"] == "update_response":
+                if event.data["feedback_type"] == "update_response":
                     additional_bytes = event.data["additional_bytes"]
                     channel_number = event.data["channel_number"]
 
@@ -396,8 +366,6 @@ class TISRGBLight(LightEntity):
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the light on."""
-        # print all kwargs
-        logging.warning(f"kwargs: {kwargs}")
         try:
             color = kwargs.get(ATTR_RGB_COLOR, None)
             brightness = kwargs.get(ATTR_BRIGHTNESS, None)
@@ -405,8 +373,6 @@ class TISRGBLight(LightEntity):
                 # map color from 255 to 100
                 color = tuple([int((c / 255) * 100) for c in color])
                 r_packet, g_packet, b_packet = self.generate_rgb_packets(self, color)
-                logging.warning(f"color (percent): {color}")
-                logging.warning(f"rgb packets: {r_packet}, {g_packet}, {b_packet}")
                 ack_status = await self.api.protocol.sender.send_packet_with_ack(
                     r_packet
                 )
@@ -432,14 +398,12 @@ class TISRGBLight(LightEntity):
                 # map color from 100 to 255
                 color = tuple([int((c / 100) * 255) for c in color])
                 self._attr_rgb_color = color
+                self.default_color = color
             elif brightness is not None:
                 brightness /= 255
-                logging.warning(f"brightness: {brightness}")
 
                 color = self._attr_rgb_color or (0, 0, 0)
-                logging.warning(f"current color: {color}")
                 color = tuple([int(brightness * c * 100 / 255) for c in color])
-                logging.warning(f"brightened color: {color}")
 
                 r_packet, g_packet, b_packet = self.generate_rgb_packets(self, color)
                 ack_status = await self.api.protocol.sender.send_packet_with_ack(
@@ -465,7 +429,9 @@ class TISRGBLight(LightEntity):
                     )
                 if brightness == 0:
                     self._attr_state = False
-                self._attr_rgb_color = tuple([int(c * 255 / 100) for c in color])
+                else:
+                    self._attr_state = True
+                self._attr_rgb_color = self.default_color or (0, 0, 0)
             else:
                 logging.warning(
                     "Neither color nor brightness provided, using default color."
