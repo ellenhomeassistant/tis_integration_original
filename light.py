@@ -307,6 +307,7 @@ class TISRGBLight(LightEntity):
                     channel_value = event.data["additional_bytes"][2]
                     channel_number = event.data["channel_number"]
                     if int(channel_number) == self.r_channel:
+                        logging.warning(f"red channel value: {channel_value}")
                         self._attr_rgb_color = (
                             int((channel_value / 100) * 255),
                             self._attr_rgb_color[1],
@@ -314,6 +315,7 @@ class TISRGBLight(LightEntity):
                         )
                         self.rgb_value_flags[0] = 1
                     elif int(channel_number) == self.g_channel:
+                        logging.warning(f"green channel value: {channel_value}")
                         self._attr_rgb_color = (
                             self._attr_rgb_color[0],
                             int((channel_value / 100) * 255),
@@ -321,6 +323,7 @@ class TISRGBLight(LightEntity):
                         )
                         self.rgb_value_flags[1] = 1
                     elif int(channel_number) == self.b_channel:
+                        logging.warning(f"blue channel value: {channel_value}")
                         self._attr_rgb_color = (
                             self._attr_rgb_color[0],
                             self._attr_rgb_color[1],
