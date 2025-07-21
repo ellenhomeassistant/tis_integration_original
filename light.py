@@ -372,6 +372,7 @@ class TISRGBLight(LightEntity):
             if color is not None:
                 # map color from 255 to 100
                 color = tuple([int((c / 255) * 100) for c in color])
+                logging.warning(f"color: {color}")
                 r_packet, g_packet, b_packet = self.generate_rgb_packets(self, color)
                 ack_status = await self.api.protocol.sender.send_packet_with_ack(
                     r_packet
@@ -400,9 +401,11 @@ class TISRGBLight(LightEntity):
                 self._attr_rgb_color = color
                 self.default_color = color
             elif brightness is not None:
+                logging.warning(f"brightness: {brightness}")
                 brightness /= 255
 
                 color = self.default_color or (0, 0, 0)
+                logging.warning(f"default color: {color}")
                 color = tuple([int(brightness * c * 100 / 255) for c in color])
 
                 r_packet, g_packet, b_packet = self.generate_rgb_packets(self, color)
@@ -428,7 +431,9 @@ class TISRGBLight(LightEntity):
                         f"error turning on light: {ack_status}, channel: {self.b_channel}",
                     )
                 self._attr_state = True
-                self._attr_rgb_color = tuple([min(int(c * 255 / 100), 255) for c in color])
+                self._attr_rgb_color = tuple(
+                    [min(int(c * 255 / 100), 255) for c in color]
+                )
             else:
                 logging.warning(
                     "Neither color nor brightness provided, using default color."
