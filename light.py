@@ -438,7 +438,11 @@ class TISRGBLight(LightEntity):
                     "Neither color nor brightness provided, using default color."
                 )
                 color = self.default_color or (0, 0, 0)
-                self._attr_state = True if self.default_color and self.default_color != (0, 0, 0) else False
+                self._attr_state = (
+                    True
+                    if self.default_color and self.default_color != (0, 0, 0)
+                    else False
+                )
                 self._attr_rgb_color = color
                 color = tuple([int(c * 100 / 255) for c in color])
                 r_packet, g_packet, b_packet = self.generate_rgb_packets(self, color)
@@ -512,6 +516,7 @@ class TISRGBWLight(LightEntity):
         self.rgbw_value_flags = [0, 0, 0, 0]
         self.listener = None
         self._attr_unique_id = f"{self.name}_{self.r_channel}_{self.g_channel}_{self.b_channel}_{self.w_channel}"
+        self.default_color = (0, 0, 0, 0)
         self.setup_light()
 
     def setup_light(self):
@@ -568,6 +573,7 @@ class TISRGBWLight(LightEntity):
                     if self.rgbw_value_flags == [1, 1, 1, 1]:
                         self.async_write_ha_state()
                 elif event.data["feedback_type"] == "update_response":
+                    logging.info(f"RGBW event data: {event.data}")
                     additional_bytes = event.data["additional_bytes"]
 
                     r_value = (additional_bytes[self.r_channel] / 100) * 255
@@ -632,38 +638,39 @@ class TISRGBWLight(LightEntity):
         logging.info(f"kwargs: {kwargs}")
 
         try:
-            color = kwargs[ATTR_RGBW_COLOR]
-            # map color from 255 to 100
-            color = tuple([int((c / 255) * 100) for c in color])
-            r_packet, g_packet, b_packet, w_packet = self.generate_rgbw_packets(
-                self, color
-            )
-            logging.info(f"color (percent): {color}")
-            ack_status = await self.api.protocol.sender.send_packet_with_ack(r_packet)
-            if not ack_status:
-                logging.error(
-                    f"error turning on light: {ack_status}, channel: {self.r_channel}",
+            color = kwargs.get(ATTR_RGBW_COLOR, None)
+            if color is not None:
+                # map color from 255 to 100
+                color = tuple([int((c / 255) * 100) for c in color])
+                r_packet, g_packet, b_packet, w_packet = self.generate_rgbw_packets(
+                    self, color
                 )
-            ack_status = await self.api.protocol.sender.send_packet_with_ack(g_packet)
-            if not ack_status:
-                logging.error(
-                    f"error turning on light: {ack_status}, channel: {self.g_channel}",
-                )
-            ack_status = await self.api.protocol.sender.send_packet_with_ack(b_packet)
-            if not ack_status:
-                logging.error(
-                    f"error turning on light: {ack_status}, channel: {self.b_channel}",
-                )
-            ack_status = await self.api.protocol.sender.send_packet_with_ack(w_packet)
-            if not ack_status:
-                logging.error(
-                    f"error turning on light: {ack_status}, channel: {self.w_channel}",
-                )
+                logging.info(f"color (percent): {color}")
+                ack_status = await self.api.protocol.sender.send_packet_with_ack(r_packet)
+                if not ack_status:
+                    logging.error(
+                        f"error turning on light: {ack_status}, channel: {self.r_channel}",
+                    )
+                ack_status = await self.api.protocol.sender.send_packet_with_ack(g_packet)
+                if not ack_status:
+                    logging.error(
+                        f"error turning on light: {ack_status}, channel: {self.g_channel}",
+                    )
+                ack_status = await self.api.protocol.sender.send_packet_with_ack(b_packet)
+                if not ack_status:
+                    logging.error(
+                        f"error turning on light: {ack_status}, channel: {self.b_channel}",
+                    )
+                ack_status = await self.api.protocol.sender.send_packet_with_ack(w_packet)
+                if not ack_status:
+                    logging.error(
+                        f"error turning on light: {ack_status}, channel: {self.w_channel}",
+                    )
 
-            self._attr_state = True
-            # map color from 100 to 255
-            color = tuple([int((c / 100) * 255) for c in color])
-            self._attr_rgbw_color = color
+                self._attr_state = True
+                # map color from 100 to 255
+                color = tuple([int((c / 100) * 255) for c in color])
+                self._attr_rgbw_color = color
 
         except KeyError as e:
             logging.error(f"error turning on light: {e}")
