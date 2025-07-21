@@ -305,6 +305,7 @@ class TISRGBLight(LightEntity):
             """Handle the event."""
             if event.event_type == str(self.device_id):
                 if event.data["feedback_type"] == "update_response":
+                    logging.warning("update response received for RGB light")
                     additional_bytes = event.data["additional_bytes"]
                     channel_number = event.data["channel_number"]
 
