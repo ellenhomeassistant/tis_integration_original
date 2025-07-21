@@ -432,11 +432,7 @@ class TISRGBLight(LightEntity):
                     logging.error(
                         f"error turning on light: {ack_status}, channel: {self.b_channel}",
                     )
-                self._attr_state = True
-                self._attr_rgb_color = tuple(
-                    [min(int(c * 255 / 100), 255) for c in color]
-                )
-                logging.info(f"brightened color: {self._attr_rgb_color}")
+                logging.info(f"brightened color: {color}")
             else:
                 logging.info(
                     "Neither color nor brightness provided, using default color."
