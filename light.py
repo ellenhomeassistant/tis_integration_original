@@ -451,6 +451,8 @@ class TISRGBLight(LightEntity):
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the light off."""
+        logging.warning("turning off")
+        logging.warning(f"kwargs: {kwargs}")
         r_packet, g_packet, b_packet = self.generate_rgb_packets(self, (0, 0, 0))
         _ = await self.api.protocol.sender.send_packet_with_ack(g_packet)
         _ = await self.api.protocol.sender.send_packet_with_ack(r_packet)
