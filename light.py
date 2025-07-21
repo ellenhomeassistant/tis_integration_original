@@ -282,7 +282,6 @@ class TISRGBLight(LightEntity):
         self._attr_state = None
         self._attr_rgb_color = None
         self.listener = None
-        self.broadcast_channel = 255
         self._attr_unique_id = (
             f"{self.name}_{self.r_channel}_{self.g_channel}_{self.b_channel}"
         )
@@ -512,7 +511,6 @@ class TISRGBWLight(LightEntity):
         self._attr_rgbw_color = None
         self.rgbw_value_flags = [0, 0, 0, 0]
         self.listener = None
-        self.broadcast_channel = 255
         self._attr_unique_id = f"{self.name}_{self.r_channel}_{self.g_channel}_{self.b_channel}_{self.w_channel}"
         self.setup_light()
 
