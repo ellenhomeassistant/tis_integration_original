@@ -281,6 +281,7 @@ class TISRGBLight(LightEntity):
         self._attr_name = light_name
         self._attr_state = None
         self._attr_rgb_color = None
+        self._attr_brightness = None
         self.listener = None
         self._attr_unique_id = (
             f"{self.name}_{self.r_channel}_{self.g_channel}_{self.b_channel}"
@@ -341,6 +342,11 @@ class TISRGBLight(LightEntity):
     def color_mode(self) -> ColorMode | str | None:
         """Return the color mode of the light."""
         return self._attr_color_mode
+
+    @property
+    def brightness(self) -> int | None:
+        """Return the brightness of the light."""
+        return self._attr_brightness
 
     # Unique property for RGB light
     @property
@@ -634,11 +640,10 @@ class TISRGBWLight(LightEntity):
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the light on."""
-        # print all kwargs
-        logging.info(f"kwargs: {kwargs}")
-
         try:
             color = kwargs.get(ATTR_RGBW_COLOR, None)
+            brightness = kwargs.get(ATTR_BRIGHTNESS, None)
+            logging.warning(f"kwargs: {kwargs}")
             if color is not None:
                 # map color from 255 to 100
                 color = tuple([int((c / 255) * 100) for c in color])
@@ -667,6 +672,41 @@ class TISRGBWLight(LightEntity):
                         f"error turning on light: {ack_status}, channel: {self.w_channel}",
                     )
 
+                self._attr_state = True
+                # map color from 100 to 255
+                color = tuple([int((c / 100) * 255) for c in color])
+                self._attr_rgbw_color = color
+            elif brightness is not None:
+                brightness = max(1, min(255, brightness))
+                brightness /= 255
+
+                color = self._attr_rgbw_color or (0, 0, 0, 0)
+                logging.info(f"default color: {color}")
+                color = tuple([int(brightness * c * 100 / 255) for c in color])
+
+                r_packet, g_packet, b_packet, w_packet = self.generate_rgbw_packets(
+                    self, color
+                )
+                ack_status = await self.api.protocol.sender.send_packet_with_ack(r_packet)
+                if not ack_status:
+                    logging.error(
+                        f"error turning on light: {ack_status}, channel: {self.r_channel}",
+                    )
+                ack_status = await self.api.protocol.sender.send_packet_with_ack(g_packet)
+                if not ack_status:
+                    logging.error(
+                        f"error turning on light: {ack_status}, channel: {self.g_channel}",
+                    )
+                ack_status = await self.api.protocol.sender.send_packet_with_ack(b_packet)
+                if not ack_status:
+                    logging.error(
+                        f"error turning on light: {ack_status}, channel: {self.b_channel}",
+                    )
+                ack_status = await self.api.protocol.sender.send_packet_with_ack(w_packet)
+                if not ack_status:
+                    logging.error(
+                        f"error turning on light: {ack_status}, channel: {self.w_channel}",
+                    )
                 self._attr_state = True
                 # map color from 100 to 255
                 color = tuple([int((c / 100) * 255) for c in color])
