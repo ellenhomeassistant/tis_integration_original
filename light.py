@@ -404,6 +404,7 @@ class TISRGBLight(LightEntity):
                 self.default_color = color
                 logging.info(f"new default color: {color}")
             elif brightness is not None:
+                brightness = max(1, min(255, brightness))
                 brightness /= 255
 
                 color = self.default_color or (0, 0, 0)
