@@ -370,10 +370,12 @@ class TISRGBLight(LightEntity):
         try:
             color = kwargs.get(ATTR_RGB_COLOR, None)
             brightness = kwargs.get(ATTR_BRIGHTNESS, None)
+            logging.warning(f"color: {color}")
+            logging.warning(f"brightness: {brightness}")
+
             if color is not None:
                 # map color from 255 to 100
                 color = tuple([int((c / 255) * 100) for c in color])
-                logging.warning(f"color: {color}")
                 r_packet, g_packet, b_packet = self.generate_rgb_packets(self, color)
                 ack_status = await self.api.protocol.sender.send_packet_with_ack(
                     r_packet
@@ -402,7 +404,6 @@ class TISRGBLight(LightEntity):
                 self._attr_rgb_color = color
                 self.default_color = color
             elif brightness is not None:
-                logging.warning(f"brightness: {brightness}")
                 brightness /= 255
 
                 color = self.default_color or (0, 0, 0)
@@ -435,10 +436,13 @@ class TISRGBLight(LightEntity):
                 self._attr_rgb_color = tuple(
                     [min(int(c * 255 / 100), 255) for c in color]
                 )
+                logging.warning(f"brightened color: {self._attr_rgb_color}")
             else:
                 logging.warning(
                     "Neither color nor brightness provided, using default color."
                 )
+                self._attr_state = True if self.default_color else False
+                self._attr_rgb_color = self.default_color or (0, 0, 0)
 
         except KeyError as e:
             logging.error(f"error turning on light: {e}")
