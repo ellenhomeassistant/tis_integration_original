@@ -444,7 +444,7 @@ class TISRGBLight(LightEntity):
                 color = self.default_color or (0, 0, 0)
                 self._attr_state = True if self.default_color and self.default_color != (0, 0, 0) else False
                 self._attr_rgb_color = color
-                color = tuple([int(brightness * c * 100 / 255) for c in color])
+                color = tuple([int(c * 100 / 255) for c in color])
                 r_packet, g_packet, b_packet = self.generate_rgb_packets(self, color)
                 ack_status = await self.api.protocol.sender.send_packet_with_ack(
                     r_packet
