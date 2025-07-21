@@ -305,7 +305,6 @@ class TISRGBLight(LightEntity):
             """Handle the event."""
             if event.event_type == str(self.device_id):
                 if event.data["feedback_type"] == "update_response":
-                    logging.warning("update response received for RGB light")
                     additional_bytes = event.data["additional_bytes"]
                     channel_number = event.data["channel_number"]
 
@@ -370,8 +369,8 @@ class TISRGBLight(LightEntity):
         try:
             color = kwargs.get(ATTR_RGB_COLOR, None)
             brightness = kwargs.get(ATTR_BRIGHTNESS, None)
-            logging.warning(f"color: {color}")
-            logging.warning(f"brightness: {brightness}")
+            logging.info(f"color: {color}")
+            logging.info(f"brightness: {brightness}")
 
             if color is not None:
                 # map color from 255 to 100
@@ -403,11 +402,12 @@ class TISRGBLight(LightEntity):
                 color = tuple([int((c / 100) * 255) for c in color])
                 self._attr_rgb_color = color
                 self.default_color = color
+                logging.info(f"new default color: {color}")
             elif brightness is not None:
                 brightness /= 255
 
                 color = self.default_color or (0, 0, 0)
-                logging.warning(f"default color: {color}")
+                logging.info(f"default color: {color}")
                 color = tuple([int(brightness * c * 100 / 255) for c in color])
 
                 r_packet, g_packet, b_packet = self.generate_rgb_packets(self, color)
@@ -436,13 +436,37 @@ class TISRGBLight(LightEntity):
                 self._attr_rgb_color = tuple(
                     [min(int(c * 255 / 100), 255) for c in color]
                 )
-                logging.warning(f"brightened color: {self._attr_rgb_color}")
+                logging.info(f"brightened color: {self._attr_rgb_color}")
             else:
-                logging.warning(
+                logging.info(
                     "Neither color nor brightness provided, using default color."
                 )
-                self._attr_state = True if self.default_color else False
-                self._attr_rgb_color = self.default_color or (0, 0, 0)
+                color = self.default_color or (0, 0, 0)
+                self._attr_state = True if self.default_color and self.default_color != (0, 0, 0) else False
+                self._attr_rgb_color = color
+                color = tuple([int(brightness * c * 100 / 255) for c in color])
+                r_packet, g_packet, b_packet = self.generate_rgb_packets(self, color)
+                ack_status = await self.api.protocol.sender.send_packet_with_ack(
+                    r_packet
+                )
+                if not ack_status:
+                    logging.error(
+                        f"error turning on light: {ack_status}, channel: {self.r_channel}",
+                    )
+                ack_status = await self.api.protocol.sender.send_packet_with_ack(
+                    g_packet
+                )
+                if not ack_status:
+                    logging.error(
+                        f"error turning on light: {ack_status}, channel: {self.g_channel}",
+                    )
+                ack_status = await self.api.protocol.sender.send_packet_with_ack(
+                    b_packet
+                )
+                if not ack_status:
+                    logging.error(
+                        f"error turning on light: {ack_status}, channel: {self.b_channel}",
+                    )
 
         except KeyError as e:
             logging.error(f"error turning on light: {e}")
@@ -451,8 +475,8 @@ class TISRGBLight(LightEntity):
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the light off."""
-        logging.warning("turning off")
-        logging.warning(f"kwargs: {kwargs}")
+        logging.info("turning off")
+        logging.info(f"kwargs: {kwargs}")
         r_packet, g_packet, b_packet = self.generate_rgb_packets(self, (0, 0, 0))
         _ = await self.api.protocol.sender.send_packet_with_ack(g_packet)
         _ = await self.api.protocol.sender.send_packet_with_ack(r_packet)
