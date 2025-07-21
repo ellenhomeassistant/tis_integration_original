@@ -654,7 +654,6 @@ class TISRGBWLight(LightEntity):
                     f"brightness: {brightness}, self._attr_brightness: {self._attr_brightness}"
                 )
                 self._attr_brightness = brightness
-                logging.warning()
                 brightness /= 255
 
                 color = self.default_color or (0, 0, 0, 0)
