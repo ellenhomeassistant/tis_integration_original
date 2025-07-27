@@ -22,6 +22,7 @@ import logging
 
 from . import TISConfigEntry
 
+
 async def async_setup_entry(
     hass: HomeAssistant, entry: TISConfigEntry, async_add_devices: AddEntitiesCallback
 ) -> None:
@@ -52,9 +53,11 @@ async def async_setup_entry(
             ]
             async_add_devices(tis_switches, update_before_add=True)
         except Exception as e:
-            logging.error(f'error happened creating entities e: {e}')
+            logging.error(f"error happened creating entities e: {e}")
+
 
 protocol_handler = TISProtocolHandler()
+
 
 class TISSwitch(SwitchEntity):
     """Representation of a TIS switch."""
@@ -127,7 +130,7 @@ class TISSwitch(SwitchEntity):
             self.listener = self.hass.bus.async_listen(MATCH_ALL, handle_event)
             _ = await self.api.protocol.sender.send_packet(self.update_packet)
         except Exception as e:
-            logging.error(f'error in async_added_to_hass fun e: {e}')
+            logging.error(f"error in async_added_to_hass fun e: {e}")
 
     async def async_will_remove_from_hass(self) -> None:
         """Remove the listener when the entity is removed."""
@@ -151,7 +154,7 @@ class TISSwitch(SwitchEntity):
                 }
                 self.hass.bus.async_fire(str(self.device_id), event_data)
         except Exception as e:
-            logging.error(f'error in async_turn_on e: {e}')
+            logging.error(f"error in async_turn_on e: {e}")
         self.schedule_update_ha_state()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
@@ -172,7 +175,7 @@ class TISSwitch(SwitchEntity):
                 }
                 self.hass.bus.async_fire(str(self.device_id), event_data)
         except Exception as e:
-            logging.error(f'error in async_turn_off e: {e}')
+            logging.error(f"error in async_turn_off e: {e}")
         self.schedule_update_ha_state()
 
     @property

@@ -103,14 +103,14 @@ class TISCoverWPos(CoverEntity):
         cover_name: str,
         channel_number: int,
         device_id: list[int],
-        settings
+        settings,
     ) -> None:
         """Initialize the cover."""
         if settings:
             settings = json.loads(settings)
             self.exchange_command = settings["exchange_command"]
         else:
-            self.exchange_command = '0'
+            self.exchange_command = "0"
         self.api = tis_api
         self.gateway = gateway
         self.device_id = device_id
@@ -140,7 +140,7 @@ class TISCoverWPos(CoverEntity):
                     if int(channel_number) == self.channel_number:
                         # Convert the received position if needed
                         position = channel_value
-                        if self.exchange_command == '1':
+                        if self.exchange_command == "1":
                             position = 100 - position
                         self._attr_is_closed = position == 0
                         self._attr_current_cover_position = position
@@ -148,11 +148,13 @@ class TISCoverWPos(CoverEntity):
                 elif event.data["feedback_type"] == "update_response":
                     additional_bytes = event.data["additional_bytes"]
                     position = additional_bytes[self.channel_number]
-                    if self.exchange_command == '1':
+                    if self.exchange_command == "1":
                         position = 100 - position
                     self._attr_current_cover_position = position
                     self._attr_is_closed = self._attr_current_cover_position == 0
-                    self._attr_state = STATE_CLOSING if self._attr_is_closed else STATE_OPENING
+                    self._attr_state = (
+                        STATE_CLOSING if self._attr_is_closed else STATE_OPENING
+                    )
                 elif event.data["feedback_type"] == "offline_device":
                     self._attr_state = STATE_UNKNOWN
                     self._attr_is_closed = None
@@ -165,7 +167,7 @@ class TISCoverWPos(CoverEntity):
 
     def _convert_position(self, position: int) -> int:
         """Convert position based on exchange_command flag."""
-        if self.exchange_command == '1':
+        if self.exchange_command == "1":
             return 100 - position
         return position
 
@@ -230,7 +232,11 @@ class TISCoverWPos(CoverEntity):
         packet = self.generate_cover_packet(self, send_position)
         ack_status = await self.api.protocol.sender.send_packet_with_ack(packet)
         if ack_status:
-            self._attr_is_closed = send_position <= 20 if self.exchange_command == '0' else send_position >= 80
+            self._attr_is_closed = (
+                send_position <= 20
+                if self.exchange_command == "0"
+                else send_position >= 80
+            )
             self._attr_current_cover_position = position
         else:
             self._attr_is_closed = None
@@ -269,6 +275,7 @@ class TISCoverNoPos(CoverEntity):
 
     async def async_added_to_hass(self) -> None:
         """Subscribe to events."""
+
         @callback
         async def handle_event(event: Event):
             """Handle the event."""
@@ -288,13 +295,18 @@ class TISCoverNoPos(CoverEntity):
                             self._attr_is_closed = True
                             self._attr_state = STATE_CLOSING
                             self.last_state = STATE_CLOSING
-                            logging.info(f"down channel value: {channel_value} 'closing'")
+                            logging.info(
+                                f"down channel value: {channel_value} 'closing'"
+                            )
                     else:
                         logging.info(f"channel number: {channel_number} 'stopping'")
                         self._attr_state = self.last_state
-                        self._attr_is_closed = False if self.last_state == STATE_OPENING else True
+                        self._attr_is_closed = (
+                            False if self.last_state == STATE_OPENING else True
+                        )
             await self.async_update_ha_state(True)
             self.schedule_update_ha_state()
+
         self.listener = self.hass.bus.async_listen(str(self.device_id), handle_event)
 
     @property
@@ -310,7 +322,8 @@ class TISCoverNoPos(CoverEntity):
             return True
         elif self._attr_is_closed == False:
             return False
-        else: return None
+        else:
+            return None
 
     @property
     def supported_features(self) -> CoverEntityFeature:
@@ -367,7 +380,9 @@ class TISCoverNoPos(CoverEntity):
             if ack_status:
                 logging.info("down packet sent 'stopping'")
                 self._attr_state = self.last_state
-                self._attr_is_closed = False if self.last_state == STATE_OPENING else True
+                self._attr_is_closed = (
+                    False if self.last_state == STATE_OPENING else True
+                )
             else:
                 logging.info("down packet not sent 'stopping'")
                 self._attr_state = None
@@ -378,7 +393,9 @@ class TISCoverNoPos(CoverEntity):
             if ack_status:
                 logging.info("up packet sent 'stopping'")
                 self._attr_state = self.last_state
-                self._attr_is_closed = False if self.last_state == STATE_OPENING else True
+                self._attr_is_closed = (
+                    False if self.last_state == STATE_OPENING else True
+                )
             else:
                 logging.info("up packet not sent 'stopping'")
                 self._attr_state = None

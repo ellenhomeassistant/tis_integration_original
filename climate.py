@@ -131,7 +131,7 @@ class TISClimate(ClimateEntity):
         """Set up the AC."""
         self._attr_state = STATE_UNKNOWN
         self._attr_target_temperature = None
-        self._attr_hvac_mode = HVACMode.OFF      
+        self._attr_hvac_mode = HVACMode.OFF
         self._attr_fan_mode = FAN_MEDIUM
 
         self._attr_max_temp = TEMPERATURE_RANGES[self._attr_hvac_mode]["max"][
@@ -374,9 +374,7 @@ class TISClimate(ClimateEntity):
             self._attr_state = new_state
             self._attr_min_temp = new_min_temp
             self._attr_max_temp = new_max_temp
-            self._attr_target_temperature = (
-                new_target_temperature
-            )
+            self._attr_target_temperature = new_target_temperature
         else:
             logging.error("Failed to set hvac mode")
             self._attr_state = STATE_UNKNOWN
@@ -412,9 +410,7 @@ class TISClimate(ClimateEntity):
         )
         ack_status = await self.api.protocol.sender.send_packet_with_ack(packet)
         if ack_status:
-            self._attr_target_temperature = (
-                new_target_temperature
-            )
+            self._attr_target_temperature = new_target_temperature
             # update temperature holders
             self.mode_target_temperatures[self.hvac_mode] = (
                 new_target_temperature

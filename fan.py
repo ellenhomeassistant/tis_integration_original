@@ -16,6 +16,7 @@ SUPPORT = (
     FanEntityFeature.SET_SPEED | FanEntityFeature.TURN_OFF | FanEntityFeature.TURN_ON
 )
 
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: TISConfigEntry,
@@ -51,7 +52,7 @@ class TISCPUFan(FanEntity):
         api: TISApi,
         pin: int = 13,
         lower_threshold: float = 40,
-        higher_threshold: float = 50
+        higher_threshold: float = 50,
     ) -> None:
         """Initialize the entity."""
         self._pin = pin
@@ -103,7 +104,6 @@ class TISCPUFan(FanEntity):
             except Exception as e:
                 logging.error(f"Error adjusting fan speed: {e}")
 
-
         self._listener = self.hass.bus.async_listen(
             "cpu_temperature", handle_overheat_event
         )
@@ -148,7 +148,7 @@ class TISCPUFan(FanEntity):
         """Disconnect PWM when removed."""
         if self._listener:
             self._listener()
-    
+
         if self._pwm:
             try:
                 self._pwm.stop()
