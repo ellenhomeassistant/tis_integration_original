@@ -18,12 +18,15 @@ SECURITY_FEEDBACK_OPTIONS = {1: "vacation", 2: "away", 3: "night", 6: "disarm"}
 
 handler = TISProtocolHandler()
 
-async def async_setup_entry(hass: HomeAssistant, entry: TISConfigEntry, async_add_devices: AddEntitiesCallback):
+
+async def async_setup_entry(
+    hass: HomeAssistant, entry: TISConfigEntry, async_add_devices: AddEntitiesCallback
+):
     """Set up the TIS select."""
     tis_api: TISApi = entry.runtime_data.api
     # Fetch all switches from the TIS API
     selects: dict = await tis_api.get_entities(platform="security")
-    
+
     if selects:
         # Prepare a list of tuples containing necessary switch details
         select_entities = [
@@ -43,18 +46,22 @@ async def async_setup_entry(hass: HomeAssistant, entry: TISConfigEntry, async_ad
                 name=select_name,
                 options=list(SECURITY_OPTIONS.keys()),
                 initial_option="disarm",
-                channel_number= channel_number,
+                channel_number=channel_number,
                 device_id=device_id,
-                gateway = gateway
+                gateway=gateway,
             )
             for select_name, channel_number, device_id, gateway in select_entities
         ]
         async_add_devices(tis_selects)
 
+
 protocol_handler = TISProtocolHandler()
 
+
 class TISSecurity(SelectEntity):
-    def __init__(self, api, name, options, initial_option, channel_number, device_id, gateway):
+    def __init__(
+        self, api, name, options, initial_option, channel_number, device_id, gateway
+    ):
         self._name = name
         self.api = api
         self.unique_id = f"select_{self.name}"
@@ -64,11 +71,11 @@ class TISSecurity(SelectEntity):
         self._attr_is_protected = True
         self._attr_read_only = True
         self._listener = None
-        self.channel_number=int(channel_number)
+        self.channel_number = int(channel_number)
         self.device_id = device_id
         self.gateway = gateway
-        self.update_packet: TISPacket = protocol_handler.generate_update_security_packet(
-            self
+        self.update_packet: TISPacket = (
+            protocol_handler.generate_update_security_packet(self)
         )
 
     async def async_added_to_hass(self) -> None:
@@ -78,13 +85,19 @@ class TISSecurity(SelectEntity):
             if event.event_type == "admin_lock":
                 logging.info(f"admin lock event: {event.data}")
                 if event.data.get("locked"):
-                    self.protect() 
+                    self.protect()
                 else:
                     self.unprotect()
 
-            if event.data.get("feedback_type") == "security_feedback" or event.data.get("feedback_type") == "security_update":
+            if (
+                event.data.get("feedback_type") == "security_feedback"
+                or event.data.get("feedback_type") == "security_update"
+            ):
                 logging.info(f"security feedback event: {event.data}")
-                if self.channel_number == event.data["channel_number"]:
+                if (
+                    self.channel_number == event.data["channel_number"]
+                    and self.device_id == event.data["device_id"]
+                ):
                     mode = event.data["mode"]
                     if mode in SECURITY_FEEDBACK_OPTIONS:
                         option = SECURITY_FEEDBACK_OPTIONS[mode]
@@ -107,7 +120,11 @@ class TISSecurity(SelectEntity):
 
     @property
     def current_option(self):
-        return self._attr_current_option if self._attr_current_option in SECURITY_FEEDBACK_OPTIONS.values() else None
+        return (
+            self._attr_current_option
+            if self._attr_current_option in SECURITY_FEEDBACK_OPTIONS.values()
+            else None
+        )
 
     def protect(self):
         self._attr_read_only = True
@@ -129,8 +146,12 @@ class TISSecurity(SelectEntity):
                 mode = SECURITY_OPTIONS.get(option, None)
                 if mode:
                     logging.info(f"mode: {mode}")
-                    control_packet = handler.generate_control_security_packet(self, mode)
-                    ack = await self.api.protocol.sender.send_packet_with_ack(control_packet)
+                    control_packet = handler.generate_control_security_packet(
+                        self, mode
+                    )
+                    ack = await self.api.protocol.sender.send_packet_with_ack(
+                        control_packet
+                    )
                     logging.info(f"control_packet: {control_packet}")
                     logging.info(f"ack: {ack}")
                     if ack:
@@ -147,4 +168,6 @@ class TISSecurity(SelectEntity):
             raise ValueError(
                 f"Invalid option: {option} (possible options: {self._attr_options})"
             )
+
+
 # type: ignore
