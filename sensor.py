@@ -365,14 +365,14 @@ class CoordinatedAnalogSensor(BaseSensorEntity, SensorEntity):
             try:
                 if event.data["feedback_type"] == "analog_feedback":
                     # Map the analog to be within min and max
-                    value = event.data["analog"][self.channel_number - 1]
+                    value = float(event.data["analog"][self.channel_number - 1])
                     normalized = (value - self.min) / (
                         self.max - self.min
                     )  # Normalize to 0–1
                     normalized = max(0, min(1, normalized))  # Clamp between 0 and 1
-                    self._state = round(
+                    self._state = (
                         self.min_capacity
-                        + (self.max_capacity - self.min_capacity) * normalized, 3
+                        + (self.max_capacity - self.min_capacity) * normalized
                     )
 
                 self.async_write_ha_state()
